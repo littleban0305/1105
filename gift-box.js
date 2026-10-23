@@ -20,7 +20,8 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const progress = document.querySelector("#giftProgress");
 const progressThumb = document.querySelector("#progressThumb");
 const progressIconPath = document.querySelector("#progressIconPath");
-const instruction = document.querySelector("#giftInstruction");
+const envelope = document.querySelector("#giftEnvelope");
+const envelopeFlap = document.querySelector("#envelopeFlap");
 const progressIconPaths = {
   lock: "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM9 6a3 3 0 1 1 6 0v2H9Zm3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z",
   "arrow-forward": "M12 4 10.59 5.41 16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
@@ -41,7 +42,15 @@ const transitions = {
   unwrapped: ["unlocked"],
   unlocked: ["opening"],
   opening: ["opened"],
-  opened: []
+  opened: ["envelope-appearing"],
+  "envelope-appearing": ["envelope-heart"],
+  "envelope-heart": ["heart-dropping"],
+  "heart-dropping": ["envelope-ready"],
+  "envelope-ready": ["envelope-opening"],
+  "envelope-opening": ["envelope-open"],
+  "envelope-open": ["card-exiting"],
+  "card-exiting": ["card-revealed"],
+  "card-revealed": []
 };
 const state = {
   phase: "ready",
@@ -85,44 +94,60 @@ function setThumbPosition(position) {
 function updateProgressUI() {
   let icon = "touch";
   let label = "點擊小手，讓蝴蝶結落下";
-  let message = "點擊小手，讓蝴蝶結落下";
   let disabled = !state.landed;
   let position = 0;
 
   if (state.phase === "bow-dropping") {
     icon = "arrow-forward";
     label = "蝴蝶結落下後，向右滑動拆開緞帶";
-    message = "蝴蝶結正在落下…";
     disabled = true;
   } else if (state.phase === "tearing") {
     const step = ribbonSteps[state.ribbonStep];
     icon = step.direction > 0 ? "arrow-forward" : "arrow-back";
     label = step.direction > 0 ? "向右滑動，拆開緞帶" : "向左滑動，拆開緞帶";
-    message = `往${step.direction > 0 ? "右" : "左"}滑，拆開第 ${state.ribbonStep + 1} 條緞帶`;
     position = step.direction > 0 ? 0 : 1;
     disabled = false;
   } else if (state.phase === "unwrapped") {
     icon = "touch";
     label = "點擊放大禮物盒";
-    message = `點擊圓形，放大禮物盒（${state.growth}/3）`;
     position = 0.5;
     disabled = false;
   } else if (state.phase === "unlocked") {
     icon = "arrow-up";
     label = "向上滑動，開啟禮物盒";
-    message = "往上滑，打開禮物盒";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "opening") {
     icon = "arrow-up";
     label = "正在開啟禮物盒";
-    message = "驚喜即將揭曉…";
     position = 0.5;
     disabled = true;
-  } else if (state.phase === "opened") {
+  } else if (state.phase === "opened" || state.phase === "envelope-appearing") {
+    label = "信封正在出現";
+    position = 0.5;
+    disabled = true;
+  } else if (state.phase === "envelope-heart") {
+    label = "點擊小手，讓愛心掉下來";
+    position = 0.5;
+    disabled = false;
+  } else if (state.phase === "heart-dropping" || state.phase === "envelope-opening" || state.phase === "card-exiting") {
     icon = "arrow-up";
-    label = "禮物盒已開啟";
-    message = "驚喜已開啟，生日快樂！";
+    label = state.phase === "heart-dropping" ? "愛心正在掉落" :
+      state.phase === "envelope-opening" ? "正在打開信封" : "正在取出卡片";
+    position = 0.5;
+    disabled = true;
+  } else if (state.phase === "envelope-ready") {
+    icon = "arrow-up";
+    label = "向上滑動，打開信封";
+    position = 0.5;
+    disabled = false;
+  } else if (state.phase === "envelope-open") {
+    icon = "arrow-up";
+    label = "再次向上滑動，取出卡片";
+    position = 0.5;
+    disabled = false;
+  } else if (state.phase === "card-revealed") {
+    label = "卡片已取出";
     position = 0.5;
     disabled = true;
   }
@@ -131,7 +156,6 @@ function updateProgressUI() {
   progressThumb.dataset.icon = icon;
   progressThumb.setAttribute("aria-label", label);
   progressThumb.disabled = disabled;
-  instruction.textContent = message;
   setThumbPosition(position);
 }
 
@@ -169,6 +193,30 @@ function setPhase(next) {
   } else if (next === "opened") {
     boxContainer.classList.remove("is-opening");
     boxContainer.classList.add("is-opened");
+    boxContainer.classList.add("is-box-exiting");
+    window.setTimeout(() => {
+      boxContainer.classList.add("is-box-gone");
+      setPhase("envelope-appearing");
+    }, reducedMotion.matches ? 60 : 680);
+  } else if (next === "envelope-appearing") {
+    envelope.classList.add("is-visible");
+    window.setTimeout(() => setPhase("envelope-heart"), reducedMotion.matches ? 60 : 720);
+  } else if (next === "heart-dropping") {
+    envelope.classList.add("is-heart-dropping");
+    window.setTimeout(() => setPhase("envelope-ready"), reducedMotion.matches ? 60 : 650);
+  } else if (next === "envelope-opening") {
+    envelope.classList.add("is-opening");
+    if (reducedMotion.matches) envelopeFlap.style.transitionDuration = "1ms";
+    window.setTimeout(() => setPhase("envelope-open"), reducedMotion.matches ? 60 : 700);
+  } else if (next === "envelope-open") {
+    envelope.classList.remove("is-opening");
+    envelope.classList.add("is-open");
+  } else if (next === "card-exiting") {
+    envelope.classList.add("is-card-exiting");
+    window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 900);
+  } else if (next === "card-revealed") {
+    envelope.classList.remove("is-card-exiting");
+    envelope.classList.add("is-card-out");
   }
   updateProgressUI();
   return true;
@@ -289,13 +337,16 @@ function onProgressPointerDown(event) {
     startBowDrop();
     return;
   }
-  if (state.phase !== "tearing" && state.phase !== "unlocked") return;
+  const interactivePhase = ["tearing", "unlocked", "envelope-ready", "envelope-open"].includes(state.phase);
+  if (!interactivePhase) return;
   event.preventDefault();
-  if (state.phase === "unlocked") vibrate();
+  if (state.phase !== "tearing") vibrate();
   progressThumb.classList.add("is-pressed");
   gesture = {
     id: event.pointerId,
-    mode: state.phase === "tearing" ? "ribbon" : "open",
+    mode: state.phase === "tearing" ? "ribbon" :
+      state.phase === "unlocked" ? "open-gift" :
+        state.phase === "envelope-ready" ? "open-envelope" : "take-card",
     startX: event.clientX,
     startY: event.clientY,
     moved: false
@@ -324,10 +375,12 @@ function onProgressPointerMove(event) {
     startContinuousVibration();
   }
 
-  if (gesture.mode === "open") {
+  if (gesture.mode === "open-gift" || gesture.mode === "open-envelope" || gesture.mode === "take-card") {
     const upwardDistance = -deltaY;
     if (upwardDistance > 54 && upwardDistance > Math.abs(deltaX) * 1.15) {
-      setPhase("opening");
+      if (gesture.mode === "open-gift") setPhase("opening");
+      else if (gesture.mode === "open-envelope") setPhase("envelope-opening");
+      else setPhase("card-exiting");
     }
     return;
   }
@@ -367,6 +420,9 @@ progressThumb.addEventListener("click", () => {
     } else {
       updateProgressUI();
     }
+  } else if (state.phase === "envelope-heart") {
+    vibrate();
+    setPhase("heart-dropping");
   }
 });
 progressThumb.addEventListener("keydown", event => {
@@ -380,6 +436,14 @@ progressThumb.addEventListener("keydown", event => {
   } else if (state.phase === "unlocked" && event.key === "ArrowUp") {
     event.preventDefault();
     setPhase("opening");
+  } else if (state.phase === "envelope-ready" && event.key === "ArrowUp") {
+    event.preventDefault();
+    vibrate();
+    setPhase("envelope-opening");
+  } else if (state.phase === "envelope-open" && event.key === "ArrowUp") {
+    event.preventDefault();
+    vibrate();
+    setPhase("card-exiting");
   }
 });
 progressThumb.addEventListener("pointerdown", onProgressPointerDown);
