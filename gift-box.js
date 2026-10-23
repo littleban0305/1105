@@ -57,9 +57,23 @@ const state = {
 };
 let gesture = null;
 let suppressClick = false;
+let vibrationTimer = 0;
 
 function vibrate(duration = 18) {
   if (typeof navigator.vibrate === "function") navigator.vibrate(duration);
+}
+
+function startContinuousVibration() {
+  if (vibrationTimer || typeof navigator.vibrate !== "function") return;
+  vibrate(12);
+  vibrationTimer = window.setInterval(() => vibrate(12), 90);
+}
+
+function stopContinuousVibration() {
+  if (!vibrationTimer) return;
+  window.clearInterval(vibrationTimer);
+  vibrationTimer = 0;
+  if (typeof navigator.vibrate === "function") navigator.vibrate(0);
 }
 
 function setThumbPosition(position) {
@@ -305,7 +319,10 @@ function onProgressPointerMove(event) {
   if (!gesture || gesture.id !== event.pointerId) return;
   const deltaX = event.clientX - gesture.startX;
   const deltaY = event.clientY - gesture.startY;
-  if (Math.hypot(deltaX, deltaY) > 4) gesture.moved = true;
+  if (Math.hypot(deltaX, deltaY) > 4) {
+    gesture.moved = true;
+    startContinuousVibration();
+  }
 
   if (gesture.mode === "open") {
     const upwardDistance = -deltaY;
@@ -328,6 +345,7 @@ function onProgressPointerMove(event) {
 
 function onProgressPointerUp(event) {
   if (!gesture || gesture.id !== event.pointerId) return;
+  stopContinuousVibration();
   if (gesture.moved) {
     suppressClick = true;
     window.setTimeout(() => { suppressClick = false; }, 0);
