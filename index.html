@@ -536,7 +536,7 @@
       z-index: 5;
       top: 50%;
       left: 50%;
-      width: min(82vw, 320px);
+      width: min(64vw, 250px);
       aspect-ratio: 1.55;
       visibility: hidden;
       opacity: 0;
@@ -584,10 +584,10 @@
     .gift-envelope__card {
       position: absolute;
       z-index: 1;
-      top: 21%;
-      left: 19%;
-      width: 62%;
-      height: 54%;
+      top: 16%;
+      left: calc(50% - min(25.42vw, 99px));
+      width: min(50.84vw, 198px);
+      height: min(28vw, 111px);
       border: 1px solid #d5bb83;
       border-radius: 4px;
       background: linear-gradient(#fffdf8, #f8f0df);
@@ -806,6 +806,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=compact-card" defer></script>
+  <script src="gift-box.js?v=smaller-envelope-preserve-card" defer></script>
 </body>
 </html>
