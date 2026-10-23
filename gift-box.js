@@ -51,6 +51,10 @@ const state = {
 let gesture = null;
 let suppressClick = false;
 
+function vibrate(duration = 18) {
+  if (typeof navigator.vibrate === "function") navigator.vibrate(duration);
+}
+
 function setThumbPosition(position) {
   state.sliderPosition = Math.max(0, Math.min(1, position));
   const travel = Math.max(0, progress.clientWidth - progressThumb.offsetWidth);
@@ -247,6 +251,7 @@ function resetHover(event) {
 
 function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
   if (state.phase !== "tearing" || state.ribbonStep !== expectedStep) return;
+  vibrate();
   const step = ribbonSteps[state.ribbonStep];
   setProgress(step.route, step.edge, 1, handPosition);
   state.ribbonStep += 1;
@@ -266,6 +271,7 @@ function onProgressPointerDown(event) {
   }
   if (state.phase !== "tearing" && state.phase !== "unlocked") return;
   event.preventDefault();
+  if (state.phase === "unlocked") vibrate();
   progressThumb.classList.add("is-pressed");
   gesture = {
     id: event.pointerId,
@@ -285,6 +291,7 @@ function onProgressPointerDown(event) {
 
 function startBowDrop() {
   if (!state.landed || state.phase !== "ready") return;
+  vibrate(30);
   setPhase("bow-dropping");
 }
 
@@ -328,6 +335,7 @@ progressThumb.addEventListener("click", () => {
   if (state.phase === "ready") {
     startBowDrop();
   } else if (state.phase === "unwrapped") {
+    vibrate();
     state.growth += 1;
     boxContainer.style.setProperty("--gift-scale", `${0.75 + state.growth * 0.06}`);
     if (state.growth === 3) {

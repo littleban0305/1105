@@ -92,19 +92,6 @@
       aspect-ratio: 1000 / 700;
     }
 
-    .box::before {
-      position: absolute;
-      z-index: 0;
-      top: 50%;
-      left: 50%;
-      width: min(88vw, 380px);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      background: radial-gradient(circle at 36% 30%, #fffdf4, #dfebed 72%);
-      content: "";
-      transform: translate(-50%, -50%);
-    }
-
     .box-body {
       position: relative;
       z-index: 1;
@@ -544,20 +531,6 @@
 
     .gift-box__end--top { transition: opacity 250ms ease; }
 
-    .gift-box-container::after {
-      position: absolute;
-      z-index: 0;
-      right: 8%;
-      bottom: 20%;
-      left: 8%;
-      height: 16px;
-      border-bottom: 2px solid #6d827e88;
-      border-radius: 50%;
-      background: radial-gradient(ellipse, #314b4d36, transparent 72%);
-      content: "";
-      transform: scaleX(.9);
-    }
-
     .gift-box-container.is-falling { pointer-events: none; }
     .gift-box-container.is-landed { pointer-events: auto; }
 
@@ -648,6 +621,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=progress-icon-update" defer></script>
+  <script src="gift-box.js?v=clean-background-haptics" defer></script>
 </body>
 </html>
