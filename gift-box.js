@@ -21,6 +21,7 @@ const progress = document.querySelector("#giftProgress");
 const progressThumb = document.querySelector("#progressThumb");
 const progressIconPath = document.querySelector("#progressIconPath");
 const envelope = document.querySelector("#giftEnvelope");
+const envelopeCard = document.querySelector("#envelopeCard");
 const envelopeFlap = document.querySelector("#envelopeFlap");
 const progressIconPaths = {
   lock: "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM9 6a3 3 0 1 1 6 0v2H9Zm3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z",
@@ -50,7 +51,8 @@ const transitions = {
   "envelope-ready": ["envelope-opening"],
   "envelope-opening": ["envelope-open"],
   "envelope-open": ["card-exiting"],
-  "card-exiting": ["card-revealed"],
+  "card-exiting": ["card-moving"],
+  "card-moving": ["card-revealed"],
   "card-revealed": []
 };
 const state = {
@@ -131,7 +133,8 @@ function updateProgressUI() {
     label = "點擊小手，讓愛心掉下來";
     position = 0.5;
     disabled = false;
-  } else if (state.phase === "heart-dropping" || state.phase === "envelope-opening" || state.phase === "card-exiting") {
+  } else if (state.phase === "heart-dropping" || state.phase === "envelope-opening" ||
+    state.phase === "card-exiting" || state.phase === "card-moving") {
     icon = "arrow-up";
     label = state.phase === "heart-dropping" ? "愛心正在掉落" :
       state.phase === "envelope-opening" ? "正在打開信封" : "正在取出卡片";
@@ -197,7 +200,7 @@ function setPhase(next) {
     setPhase("envelope-appearing");
   } else if (next === "envelope-appearing") {
     envelope.classList.add("is-visible");
-    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 720);
+    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 900);
   } else if (next === "box-exiting") {
     boxContainer.classList.add("is-box-exiting");
     window.setTimeout(() => {
@@ -215,11 +218,23 @@ function setPhase(next) {
     envelope.classList.remove("is-opening");
     envelope.classList.add("is-open");
   } else if (next === "card-exiting") {
-    envelope.classList.add("is-card-exiting");
-    window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 900);
-  } else if (next === "card-revealed") {
-    envelope.classList.remove("is-card-exiting");
-    envelope.classList.add("is-card-out");
+    envelope.classList.add("is-card-extracting");
+    window.setTimeout(() => {
+      const cardBounds = envelopeCard.getBoundingClientRect();
+      envelopeCard.style.left = `${cardBounds.left}px`;
+      envelopeCard.style.top = `${cardBounds.top}px`;
+      envelopeCard.style.width = `${cardBounds.width}px`;
+      envelopeCard.style.height = `${cardBounds.height}px`;
+      envelopeCard.style.transform = "none";
+      envelopeCard.classList.add("is-card-flight");
+      document.querySelector(".experience").append(envelopeCard);
+      setPhase("card-moving");
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        envelopeCard.style.left = `${(window.innerWidth - cardBounds.width) / 2}px`;
+        envelopeCard.style.top = `${(window.innerHeight - cardBounds.height) / 2}px`;
+      }));
+      window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 850);
+    }, reducedMotion.matches ? 60 : 760);
   }
   updateProgressUI();
   return true;

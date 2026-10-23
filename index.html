@@ -548,7 +548,7 @@
     .gift-envelope.is-visible {
       visibility: visible;
       opacity: 1;
-      animation: envelope-pop 700ms cubic-bezier(.18,.84,.28,1.2) both;
+      animation: envelope-pop 900ms cubic-bezier(.18,.84,.28,1.2) both;
     }
 
     .gift-envelope__scene {
@@ -571,15 +571,15 @@
     .gift-envelope__card {
       position: absolute;
       z-index: 1;
-      top: 4%;
-      left: 10%;
-      width: 80%;
-      height: 92%;
+      top: 12%;
+      left: 13%;
+      width: 74%;
+      height: 70%;
       border: 1px solid #d5bb83;
       border-radius: 4px;
       background: linear-gradient(#fffdf8, #f8f0df);
       box-shadow: 0 2px 5px #10294322;
-      transform: translate3d(0, 28%, 0);
+      transform: translate3d(0, 0, 0);
       transition: transform 720ms cubic-bezier(.2,.75,.25,1);
     }
 
@@ -657,13 +657,18 @@
       transform: rotateX(178deg) translateZ(4px);
     }
 
-    .gift-envelope.is-card-exiting .gift-envelope__card,
-    .gift-envelope.is-card-out .gift-envelope__card {
-      transform: translate3d(0, -25%, 45px) rotate(-3deg) scale(1.04);
+    .gift-envelope.is-card-extracting .gift-envelope__card {
+      z-index: 6;
+      transform: translate3d(0, -135%, 45px) rotate(-3deg);
     }
 
-    .gift-envelope.is-card-exiting .gift-envelope__card {
-      transition-duration: 850ms;
+    .gift-envelope__card.is-card-flight {
+      position: fixed;
+      z-index: 10;
+      margin: 0;
+      transform: none;
+      transition: top 800ms cubic-bezier(.2,.75,.25,1), left 800ms cubic-bezier(.2,.75,.25,1);
+      will-change: top, left;
     }
 
     @keyframes gift-box-tear-bump {
@@ -694,8 +699,9 @@
     }
 
     @keyframes envelope-pop {
-      0% { opacity: 0; transform: translate(-50%, -55%) scale(.45) rotate(-8deg); }
-      68% { opacity: 1; transform: translate(-50%, -55%) scale(1.08) rotate(3deg); }
+      0% { opacity: 0; transform: translate(-50%, 50%) scale(.55) rotate(-8deg); }
+      52% { opacity: 1; transform: translate(-50%, -70%) scale(1.06) rotate(3deg); }
+      76% { opacity: 1; transform: translate(-50%, -50%) scale(.98) rotate(-1deg); }
       100% { opacity: 1; transform: translate(-50%, -55%) scale(1) rotate(0); }
     }
 
@@ -771,6 +777,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=sequenced-envelope-card" defer></script>
+  <script src="gift-box.js?v=card-pull-flight" defer></script>
 </body>
 </html>
