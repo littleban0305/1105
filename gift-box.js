@@ -151,7 +151,7 @@ function updateProgressUI() {
     position = 0.5;
     disabled = false;
   } else if (state.phase === "card-revealed") {
-    label = "卡片已取出";
+    label = "卡片正在展開";
     position = 0.5;
     disabled = true;
   }
@@ -252,6 +252,9 @@ function setPhase(next) {
       }));
       window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 850);
     }, reducedMotion.matches ? 60 : 780);
+  } else if (next === "card-revealed") {
+    envelopeCard.classList.add("is-card-opening");
+    window.setTimeout(() => window.location.assign("1105.html"), reducedMotion.matches ? 150 : 950);
   }
   updateProgressUI();
   return true;
