@@ -69,9 +69,9 @@ function setThumbPosition(position) {
 }
 
 function updateProgressUI() {
-  let icon = "lock";
-  let label = "解除蝴蝶結";
-  let message = "點擊鎖頭，讓蝴蝶結落下";
+  let icon = "touch";
+  let label = "點擊小手，讓蝴蝶結落下";
+  let message = "點擊小手，讓蝴蝶結落下";
   let disabled = !state.landed;
   let position = 0;
 
