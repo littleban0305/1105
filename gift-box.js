@@ -43,7 +43,8 @@ const transitions = {
   unlocked: ["opening"],
   opening: ["opened"],
   opened: ["envelope-appearing"],
-  "envelope-appearing": ["envelope-heart"],
+  "envelope-appearing": ["box-exiting"],
+  "box-exiting": ["envelope-heart"],
   "envelope-heart": ["heart-dropping"],
   "heart-dropping": ["envelope-ready"],
   "envelope-ready": ["envelope-opening"],
@@ -95,7 +96,7 @@ function updateProgressUI() {
   let icon = "touch";
   let label = "點擊小手，讓蝴蝶結落下";
   let disabled = !state.landed;
-  let position = 0;
+  let position = 0.5;
 
   if (state.phase === "bow-dropping") {
     icon = "arrow-forward";
@@ -122,7 +123,7 @@ function updateProgressUI() {
     label = "正在開啟禮物盒";
     position = 0.5;
     disabled = true;
-  } else if (state.phase === "opened" || state.phase === "envelope-appearing") {
+  } else if (state.phase === "opened" || state.phase === "envelope-appearing" || state.phase === "box-exiting") {
     label = "信封正在出現";
     position = 0.5;
     disabled = true;
@@ -193,14 +194,16 @@ function setPhase(next) {
   } else if (next === "opened") {
     boxContainer.classList.remove("is-opening");
     boxContainer.classList.add("is-opened");
+    setPhase("envelope-appearing");
+  } else if (next === "envelope-appearing") {
+    envelope.classList.add("is-visible");
+    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 720);
+  } else if (next === "box-exiting") {
     boxContainer.classList.add("is-box-exiting");
     window.setTimeout(() => {
       boxContainer.classList.add("is-box-gone");
-      setPhase("envelope-appearing");
+      setPhase("envelope-heart");
     }, reducedMotion.matches ? 60 : 680);
-  } else if (next === "envelope-appearing") {
-    envelope.classList.add("is-visible");
-    window.setTimeout(() => setPhase("envelope-heart"), reducedMotion.matches ? 60 : 720);
   } else if (next === "heart-dropping") {
     envelope.classList.add("is-heart-dropping");
     window.setTimeout(() => setPhase("envelope-ready"), reducedMotion.matches ? 60 : 650);

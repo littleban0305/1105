@@ -180,7 +180,7 @@
     }
 
     .gift-progress {
-      --progress-position: 30px;
+      --progress-position: 50%;
       position: relative;
       width: min(100%, 360px);
       height: 64px;
@@ -627,8 +627,8 @@
     .gift-envelope__heart {
       position: absolute;
       z-index: 5;
-      top: 37%;
-      left: 50%;
+      top: calc(58% - 2px);
+      left: calc(50% + 3px);
       width: 58px;
       height: 58px;
       transform: translate(-50%, -50%) translateZ(12px);
@@ -657,13 +657,9 @@
       transform: rotateX(178deg) translateZ(4px);
     }
 
-    .gift-envelope.is-open .gift-envelope__card {
-      transform: translate3d(0, -13%, 9px);
-    }
-
     .gift-envelope.is-card-exiting .gift-envelope__card,
     .gift-envelope.is-card-out .gift-envelope__card {
-      transform: translate3d(0, -115%, 35px) rotate(-3deg);
+      transform: translate3d(0, -25%, 45px) rotate(-3deg) scale(1.04);
     }
 
     .gift-envelope.is-card-exiting .gift-envelope__card {
@@ -775,6 +771,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=envelope-next-stage" defer></script>
+  <script src="gift-box.js?v=sequenced-envelope-card" defer></script>
 </body>
 </html>
