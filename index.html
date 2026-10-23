@@ -36,7 +36,8 @@
       display: grid;
       place-items: center;
       padding: max(26px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .container {
@@ -58,11 +59,6 @@
     .mt-5 { margin-top: 16px; }
     .d-flex { display: flex; }
     .justify-content-center { justify-content: center; }
-
-    .experience {
-      width: 100%;
-      text-align: center;
-    }
 
     .eyebrow {
       margin: 0 0 10px;
@@ -184,9 +180,75 @@
 
     .status {
       min-height: 22px;
-      margin: 12px 0 0;
+      margin: 10px 0 0;
       color: #5f6965;
       font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .experience {
+      width: min(100%, 560px);
+      text-align: center;
+    }
+
+    .gift-progress {
+      --progress-position: 0px;
+      position: relative;
+      width: min(100%, 360px);
+      height: 64px;
+      margin: 12px auto 0;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .gift-progress__track {
+      position: absolute;
+      top: 50%;
+      right: 30px;
+      left: 30px;
+      height: 14px;
+      border: 1px solid #a77e38;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #b78b42, #e1c276 48%, #bb9048);
+      box-shadow: inset 0 1px 2px #071b2b44, 0 2px 3px #071b2b18;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .gift-progress__thumb {
+      position: absolute;
+      top: 50%;
+      left: var(--progress-position);
+      z-index: 1;
+      display: grid;
+      width: 60px;
+      height: 60px;
+      padding: 0;
+      place-items: center;
+      border: 2px solid #c39a50;
+      border-radius: 50%;
+      color: var(--navy);
+      background: #fffdf7;
+      box-shadow: 0 3px 8px #071b2b30, inset 0 1px 2px #fff;
+      cursor: grab;
+      touch-action: none;
+      transform: translate(-50%, -50%);
+      transition: left 180ms ease, box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .gift-progress__thumb:active { cursor: grabbing; }
+    .gift-progress__thumb:disabled { cursor: default; opacity: .75; }
+    .gift-progress__thumb:focus-visible { outline: 3px solid #9b7435; outline-offset: 4px; }
+    .gift-progress__thumb svg { width: 28px; height: 28px; fill: currentColor; }
+    .gift-progress__thumb svg[hidden] { display: none; }
+    .gift-progress__thumb.is-pressed { transition: none; }
+
+    .gift-instruction {
+      min-height: 22px;
+      margin: 2px 0 0;
+      color: #8d6d37;
+      font-size: 13px;
+      font-weight: 650;
       line-height: 1.5;
     }
 
@@ -194,8 +256,6 @@
       main {
         padding-top: 18px;
         padding-bottom: 16px;
-        overflow-x: hidden;
-        overflow-y: auto;
       }
       h1 { font-size: 32px; }
       .intro { margin-top: 7px; }
@@ -242,15 +302,15 @@
       width: 100%;
       height: 100%;
       z-index: 1;
-      transform: rotateX(-17deg) rotateY(-31deg);
+      transform: scale(var(--gift-scale, .75)) rotateX(-17deg) rotateY(-31deg);
       transform-style: preserve-3d;
       touch-action: none;
-      transition: transform 260ms ease;
+      transition: transform 360ms cubic-bezier(.2,.72,.25,1);
     }
 
     @media (hover: hover) and (pointer: fine) {
       .gift-box-container:not(.is-bow-dropping):not(.is-bow-dropped):not(.is-tearing):not(.is-opening):not(.is-opened):hover .gift-box {
-        transform: translateY(-5px) rotateX(-13deg) rotateY(-39deg);
+        transform: scale(var(--gift-scale, .75)) translateY(-5px) rotateX(-13deg) rotateY(-39deg);
       }
     }
 
@@ -330,80 +390,6 @@
       transition: clip-path 60ms linear;
       pointer-events: none;
       touch-action: none;
-    }
-
-    .gift-ribbon-lift {
-      position: absolute;
-      z-index: 3;
-      inset: 0;
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: 0;
-      background: transparent;
-      box-shadow: none;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 120ms ease;
-      cursor: grab;
-      touch-action: none;
-    }
-
-    .gift-ribbon-lift::after {
-      position: absolute;
-      border: 1px solid #f2d897;
-      border-radius: 3px;
-      background: linear-gradient(135deg, #f5dfa6, #bd9146 48%, #f1d68e);
-      box-shadow: 0 2px 5px #071b2b88, inset 0 1px 2px #fff8;
-      content: "";
-      pointer-events: none;
-    }
-
-    .gift-ribbon-band.is-held .gift-ribbon-lift { opacity: 1; }
-    .gift-ribbon-band.is-peel-ready .gift-ribbon-lift { pointer-events: auto; }
-
-    .gift-ribbon-band--horizontal .gift-ribbon-lift {
-      transform: none;
-    }
-
-    .gift-ribbon-band--horizontal .gift-ribbon-lift::after {
-      top: -5px;
-      bottom: -5px;
-      left: var(--peel-position, 0%);
-      width: 14px;
-      transform: perspective(30px) rotateY(-13deg);
-    }
-
-    .gift-ribbon-band--vertical .gift-ribbon-lift {
-      transform: none;
-    }
-
-    .gift-ribbon-band--vertical .gift-ribbon-lift::after {
-      top: var(--peel-position, 0%);
-      right: -5px;
-      left: -5px;
-      height: 14px;
-      transform: perspective(30px) rotateX(13deg);
-    }
-
-    .gift-ribbon-band--horizontal.is-peeling-from-end .gift-ribbon-lift {
-      transform: none;
-    }
-
-    .gift-ribbon-band--horizontal.is-peeling-from-end .gift-ribbon-lift::after {
-      right: var(--peel-position, 0%);
-      left: auto;
-      transform: perspective(30px) rotateY(13deg);
-    }
-
-    .gift-ribbon-band--vertical.is-peeling-from-end .gift-ribbon-lift {
-      transform: none;
-    }
-
-    .gift-ribbon-band--vertical.is-peeling-from-end .gift-ribbon-lift::after {
-      top: auto;
-      bottom: var(--peel-position, 0%);
-      transform: perspective(30px) rotateX(-13deg);
     }
 
     .gift-ribbon-band--horizontal {
@@ -529,75 +515,6 @@
       transform: translate(-50%, -50%) scale(.3);
     }
 
-    .gift-box__lock {
-      position: absolute;
-      z-index: 12;
-      top: 50%;
-      left: 50%;
-      width: 48px;
-      height: 58px;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      opacity: 0;
-      pointer-events: none;
-      transform: translate3d(-50%, -50%, calc(var(--box-depth-half) + 5px));
-      transition: opacity 180ms ease, filter 180ms ease;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    .gift-box-container.is-unwrapped .gift-box__lock {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .gift-box__lock:focus-visible {
-      outline: 2px solid #f2d58d;
-      outline-offset: 5px;
-    }
-
-    .gift-lock__shackle {
-      position: absolute;
-      top: 2px;
-      left: 12px;
-      width: 24px;
-      height: 30px;
-      border: 5px solid #e0bc70;
-      border-bottom: 0;
-      border-radius: 14px 14px 0 0;
-      transform-origin: right bottom;
-      transition: transform 220ms ease;
-    }
-
-    .gift-lock__body {
-      position: absolute;
-      right: 3px;
-      bottom: 2px;
-      left: 3px;
-      height: 34px;
-      border: 1px solid #987037;
-      border-radius: 5px;
-      background: linear-gradient(135deg, #f2d58d, #b58840 55%, #e1c276);
-      box-shadow: 0 3px 7px #071b2baa, inset 0 1px 2px #fff9;
-    }
-
-    .gift-lock__body::after {
-      position: absolute;
-      top: 9px;
-      left: 50%;
-      width: 5px;
-      height: 12px;
-      border-radius: 3px;
-      background: #6c4b23;
-      content: "";
-      transform: translateX(-50%);
-    }
-
-    .gift-box__lock[data-taps="1"] .gift-lock__shackle { transform: rotate(-8deg); }
-    .gift-box__lock[data-taps="2"] .gift-lock__shackle { transform: rotate(-18deg) translateY(-2px); }
-    .gift-box-container.is-unlocked .gift-lock__shackle { transform: rotate(-42deg) translate(4px, -5px); }
-
     .gift-box-container.is-opening .gift-box-lid,
     .gift-box-container.is-opened .gift-box-lid {
       animation: gift-lid-open 850ms cubic-bezier(.2,.72,.2,1) forwards;
@@ -607,9 +524,6 @@
     .gift-box-container.is-opened .gift-box__glow {
       animation: gift-glow-open 850ms ease-out forwards;
     }
-
-    .gift-box-container.is-opening .gift-box__lock,
-    .gift-box-container.is-opened .gift-box__lock { opacity: 0; pointer-events: none; }
 
     .gift-box-container.is-unwrapped .gift-box__wrap,
     .gift-box-container.is-unwrapped .gift-box-lid__wrap { visibility: hidden; }
@@ -675,8 +589,9 @@
 </head>
 <body>
   <main>
-    <section class="box gift-box-container" id="luckyBox" aria-label="深藍色立體禮物盒">
-      <div class="gift gift-box" id="gift" role="group" aria-label="立體禮物盒">
+    <div class="experience">
+      <section class="box gift-box-container" id="luckyBox" aria-label="深藍色立體禮物盒">
+        <div class="gift gift-box" id="gift" role="group" aria-label="立體禮物盒">
         <div class="gift-box__body" aria-hidden="true">
           <div class="gift-box__side gift-box__side--front"></div>
           <div class="gift-box__side gift-box__side--back"></div>
@@ -710,19 +625,27 @@
             <div class="gift-box-lid__end gift-box-lid__end--top" data-ribbon-route="connector" data-ribbon-axis="horizontal"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="connector" data-ribbon-segment="0"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="0"></span></div>
             <div class="gift-box-lid__end gift-box-lid__end--bottom"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
           </div>
-          <div class="gift-box__bow" role="button" tabindex="0" aria-label="取下蝴蝶結">
+          <div class="gift-box__bow" aria-hidden="true">
             <span class="gift-box__bow-loop gift-box__bow-loop--left"></span>
             <span class="gift-box__bow-loop gift-box__bow-loop--right"></span>
             <span class="gift-box__bow-knot"></span>
           </div>
         </div>
         <div class="gift-box__glow" aria-hidden="true"></div>
-        <button class="gift-box__lock" id="giftLock" type="button" aria-label="鎖頭" data-taps="0">
-          <span class="gift-lock__shackle" aria-hidden="true"></span>
-          <span class="gift-lock__body" aria-hidden="true"></span>
+        </div>
+      </section>
+      <div class="gift-progress" id="giftProgress">
+        <div class="gift-progress__track" aria-hidden="true"></div>
+        <button class="gift-progress__thumb" id="progressThumb" type="button" aria-label="解除蝴蝶結" disabled>
+          <svg data-progress-icon="lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM9 6a3 3 0 1 1 6 0v2H9Zm3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg>
+          <svg data-progress-icon="arrow-forward" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M12 4 10.59 5.41 16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+          <svg data-progress-icon="arrow-back" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="m12 20 1.41-1.41L7.83 13H20v-2H7.83l5.58-5.59L12 4 4 12z"/></svg>
+          <svg data-progress-icon="touch" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M9 11.24V5a2 2 0 0 1 4 0v6.24l1.76.27 5.16.79a2 2 0 0 1 1.64 2.46l-1.61 6.44A3 3 0 0 1 17.04 23H9.7a3 3 0 0 1-2.34-1.12L2.7 16.3a2 2 0 0 1 3-2.63l3.3 2.9z"/></svg>
+          <svg data-progress-icon="arrow-up" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="m12 4-8 8 1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12z"/></svg>
         </button>
       </div>
-    </section>
+      <p class="gift-instruction" id="giftInstruction" aria-live="polite">點擊鎖頭，讓蝴蝶結落下</p>
+    </div>
   </main>
 
   <script src="gift-box.js" defer></script>

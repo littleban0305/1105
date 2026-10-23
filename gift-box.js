@@ -1,12 +1,7 @@
 const giftBox = document.querySelector("#gift");
 const boxContainer = document.querySelector("#luckyBox");
 const ribbonBands = [...document.querySelectorAll("[data-ribbon]")];
-for (const band of ribbonBands) {
-  band.dataset.ribbonPath = band.dataset.ribbonRoute ?? band.dataset.ribbon;
-  const lift = document.createElement("span");
-  lift.className = "gift-ribbon-lift";
-  band.append(lift);
-}
+for (const band of ribbonBands) band.dataset.ribbonPath = band.dataset.ribbonRoute ?? band.dataset.ribbon;
 const verticalSegments = [...document.querySelectorAll('[data-ribbon-route="vertical"][data-ribbon-segment]')]
   .sort((first, second) => Number(first.dataset.ribbonSegment) - Number(second.dataset.ribbonSegment));
 const connectorSegments = [...document.querySelectorAll('[data-ribbon-route="connector"][data-ribbon-segment]')]
@@ -21,8 +16,16 @@ const verticalOtherBands = ribbonBands.filter(band => band.dataset.ribbon === "v
   && band.dataset.ribbonRoute !== "connector");
 const bow = document.querySelector(".gift-box__bow");
 const lid = document.querySelector("#giftLid");
-const lock = document.querySelector("#giftLock");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const progress = document.querySelector("#giftProgress");
+const progressThumb = document.querySelector("#progressThumb");
+const instruction = document.querySelector("#giftInstruction");
+const progressIcons = [...progressThumb.querySelectorAll("[data-progress-icon]")];
+const ribbonSteps = [
+  { route: "horizontal", edge: "start", direction: 1 },
+  { route: "vertical", edge: "end", direction: -1 },
+  { route: "connector", edge: "start", direction: 1 }
+];
 
 const transitions = {
   ready: ["bow-dropping"],
@@ -40,12 +43,71 @@ const state = {
     vertical: { start: 0, end: 0 },
     connector: { start: 0, end: 0 }
   },
-  horizontalStartSegment: 0,
-  lockTaps: 0,
+  ribbonStep: 0,
+  growth: 0,
+  sliderPosition: 0,
   landed: false
 };
 let gesture = null;
-const peelHoldDuration = 220;
+let suppressClick = false;
+
+function setThumbPosition(position) {
+  state.sliderPosition = Math.max(0, Math.min(1, position));
+  const travel = Math.max(0, progress.clientWidth - progressThumb.offsetWidth);
+  progress.style.setProperty("--progress-position", `${progressThumb.offsetWidth / 2 + travel * state.sliderPosition}px`);
+}
+
+function updateProgressUI() {
+  let icon = "lock";
+  let label = "解除蝴蝶結";
+  let message = "點擊鎖頭，讓蝴蝶結落下";
+  let disabled = !state.landed;
+  let position = 0;
+
+  if (state.phase === "bow-dropping") {
+    message = "蝴蝶結正在落下…";
+    disabled = true;
+  } else if (state.phase === "tearing") {
+    const step = ribbonSteps[state.ribbonStep];
+    icon = step.direction > 0 ? "arrow-forward" : "arrow-back";
+    label = step.direction > 0 ? "向右滑動，拆開緞帶" : "向左滑動，拆開緞帶";
+    message = `往${step.direction > 0 ? "右" : "左"}滑，拆開第 ${state.ribbonStep + 1} 條緞帶`;
+    position = step.direction > 0 ? 0 : 1;
+    disabled = false;
+  } else if (state.phase === "unwrapped") {
+    icon = "touch";
+    label = "點擊放大禮物盒";
+    message = `點擊圓形，放大禮物盒（${state.growth}/3）`;
+    position = 0.5;
+    disabled = false;
+  } else if (state.phase === "unlocked") {
+    icon = "arrow-up";
+    label = "向上滑動，開啟禮物盒";
+    message = "往上滑，打開禮物盒";
+    position = 0.5;
+    disabled = false;
+  } else if (state.phase === "opening") {
+    icon = "arrow-up";
+    label = "正在開啟禮物盒";
+    message = "驚喜即將揭曉…";
+    position = 0.5;
+    disabled = true;
+  } else if (state.phase === "opened") {
+    icon = "arrow-up";
+    label = "禮物盒已開啟";
+    message = "驚喜已開啟，生日快樂！";
+    position = 0.5;
+    disabled = true;
+  }
+
+  for (const progressIcon of progressIcons) {
+    progressIcon.hidden = progressIcon.dataset.progressIcon !== icon;
+  }
+  progressThumb.setAttribute("aria-label", label);
+  progressThumb.disabled = disabled;
+  instruction.textContent = message;
+  setThumbPosition(position);
+}
 
 function bounceBox() {
   if (reducedMotion.matches) return;
@@ -67,10 +129,10 @@ function setPhase(next) {
   } else if (next === "unwrapped") {
     boxContainer.classList.remove("is-tearing");
     boxContainer.classList.add("is-unwrapped");
+    boxContainer.style.setProperty("--gift-scale", "0.75");
     bounceBox();
   } else if (next === "unlocked") {
     boxContainer.classList.add("is-unlocked");
-    lock.setAttribute("aria-label", "已解鎖的鎖頭");
   } else if (next === "opening") {
     boxContainer.classList.add("is-opening");
     if (reducedMotion.matches) {
@@ -82,20 +144,8 @@ function setPhase(next) {
     boxContainer.classList.remove("is-opening");
     boxContainer.classList.add("is-opened");
   }
+  updateProgressUI();
   return true;
-}
-
-function beginTearing() {
-  return state.phase === "tearing";
-}
-
-function clearGesture() {
-  if (!gesture) return;
-  window.clearTimeout(gesture.holdTimer);
-  for (const band of ribbonBands) {
-    if (band.dataset.ribbonPath === gesture.route) band.classList.remove("is-held");
-  }
-  gesture = null;
 }
 
 function buildTearClip(axis, progress, handPosition, edge) {
@@ -124,23 +174,15 @@ function buildTearClip(axis, progress, handPosition, edge) {
   return `polygon(${startPoints.join(", ")}, ${endPoints.reverse().join(", ")})`;
 }
 
-function setPeelEdge(band, axis, edge, progress) {
-  band.style.setProperty("--peel-position", `${Math.min(100, progress * 100)}%`);
-  band.classList.toggle("is-peeling-from-end", edge === "end");
-  band.dataset.ribbonAxis = axis;
-  band.dataset.peelEdge = edge;
-}
-
 function renderSegmentedRibbon(route, segments, handPoint, edge) {
   const segmentCount = segments.length;
   const totalProgress = state.progress[route][edge] * segmentCount;
-  const activePathIndex = Math.min(segmentCount - 1, Math.floor(totalProgress));
   for (const segment of segments) {
     const segmentIndex = Number(route === "horizontal"
       ? segment.dataset.horizontalSegment
       : segment.dataset.ribbonSegment);
     const pathIndex = route === "horizontal"
-      ? (segmentIndex - state.horizontalStartSegment + segmentCount) % segmentCount
+      ? segmentIndex
       : edge === "start" ? segmentIndex : segmentCount - segmentIndex - 1;
     const segmentProgress = Math.max(0, Math.min(1, totalProgress - pathIndex));
     const segmentState = edge === "start"
@@ -151,16 +193,6 @@ function renderSegmentedRibbon(route, segments, handPoint, edge) {
     const clip = buildTearClip(axis, segmentState, handPosition, edge);
     segment.style.clipPath = clip;
     segment.style.webkitClipPath = clip;
-    setPeelEdge(segment, axis, edge, segmentProgress);
-    const isCurrentSegment = pathIndex === activePathIndex && segmentProgress < 1;
-    const horizontalHasStarted = state.progress.horizontal.start + state.progress.horizontal.end > 0;
-    const canGrab = route !== "horizontal" || !horizontalHasStarted || isCurrentSegment;
-    segment.classList.toggle("is-peel-ready", canGrab);
-    const isHeldSegment = gesture?.band === segment;
-    segment.classList.toggle("is-held", Boolean(gesture?.held && gesture.route === route && isHeldSegment));
-    if (route === "horizontal" && gesture?.held && gesture.route === route && isCurrentSegment) {
-      gesture.band = segment;
-    }
   }
 }
 
@@ -171,7 +203,6 @@ function renderRibbon(route, handPoint, edge) {
     for (const band of verticalOtherBands) {
       band.style.clipPath = clip;
       band.style.webkitClipPath = clip;
-      setPeelEdge(band, "vertical", edge, state.progress.vertical[edge]);
     }
     return;
   }
@@ -183,20 +214,12 @@ function renderRibbon(route, handPoint, edge) {
   renderSegmentedRibbon(route, horizontalSegments, handPoint, edge);
 }
 
-function routeIsComplete(route) {
-  return state.progress[route].start + state.progress[route].end >= 1;
-}
-
 function setProgress(route, edge, nextProgress, handPosition) {
-  if (!beginTearing()) return;
   const oppositeEdge = edge === "start" ? "end" : "start";
   const remaining = 1 - state.progress[route][oppositeEdge];
   const requested = Math.max(state.progress[route][edge], Math.min(remaining, Math.max(0, nextProgress)));
   state.progress[route][edge] = requested >= remaining * 0.985 ? remaining : requested;
   renderRibbon(route, handPosition, edge);
-  if (routeIsComplete("horizontal") && routeIsComplete("vertical") && routeIsComplete("connector")) {
-    setPhase("unwrapped");
-  }
 }
 
 function localPoint(event) {
@@ -207,120 +230,12 @@ function localPoint(event) {
   };
 }
 
-function onPointerDown(event) {
-  if (!state.landed) return;
-  const target = event.target;
-  const onBow = target.closest(".gift-box__bow");
-  const onRibbonLift = target.closest(".gift-ribbon-lift");
-  const onLock = target.closest(".gift-box__lock");
-  if (onLock) return;
-  if (state.phase === "ready" && onBow) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    event.preventDefault();
-    setPhase("bow-dropping");
-    return;
-  }
-  if (state.phase === "unlocked") {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    event.preventDefault();
-    gesture = {
-      id: event.pointerId,
-      mode: "open",
-      startX: event.clientX,
-      startY: event.clientY
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    return;
-  }
-  if (state.phase !== "tearing") return;
-  if (event.pointerType === "mouse" && event.button !== 0) return;
-  const lift = event.target.closest(".gift-ribbon-lift");
-  const ribbonBand = lift?.closest("[data-ribbon-path]");
-  if (!lift || !ribbonBand || !ribbonBand.classList.contains("is-peel-ready")) return;
-  event.preventDefault();
-  beginTearing();
-  if (ribbonBand.dataset.ribbonPath === "horizontal"
-    && state.progress.horizontal.start + state.progress.horizontal.end === 0) {
-    state.horizontalStartSegment = Number(ribbonBand.dataset.horizontalSegment);
-  }
-  gesture = {
-    id: event.pointerId,
-    mode: "tear",
-    held: false,
-    holdTimer: 0,
-    startX: event.clientX,
-    startY: event.clientY,
-    lastX: event.clientX,
-    lastClientY: event.clientY,
-    edge: null,
-    route: ribbonBand.dataset.ribbonPath,
-    band: ribbonBand,
-  };
-  event.currentTarget.setPointerCapture(event.pointerId);
-  const activeGesture = gesture;
-  activeGesture.holdTimer = window.setTimeout(() => {
-    if (gesture !== activeGesture || state.phase !== "tearing") return;
-    activeGesture.held = true;
-    activeGesture.edge = ribbonBand.dataset.peelEdge;
-    ribbonBand.classList.add("is-held");
-  }, peelHoldDuration);
-}
-
-function onPointerMove(event) {
-  if (!gesture || gesture.id !== event.pointerId) return;
-  if (gesture.mode === "open") {
-    const dragX = event.clientX - gesture.startX;
-    const dragY = gesture.startY - event.clientY;
-    if (dragY > 54 && dragY > Math.abs(dragX) * 1.15) {
-      gesture = null;
-      setPhase("opening");
-    }
-    return;
-  }
-
-  const point = localPoint(event);
-  const deltaX = event.clientX - gesture.lastX;
-  const deltaY = event.clientY - (gesture.lastClientY ?? event.clientY);
-  gesture.lastX = event.clientX;
-  gesture.lastClientY = event.clientY;
-  const distance = Math.hypot(deltaX, deltaY);
-  if (!gesture.held) {
-    if (Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) > 48) clearGesture();
-    return;
-  }
-  if (distance > 0) {
-    const axis = gesture.band.dataset.ribbonAxis;
-    const directedDelta = axis === "horizontal" ? deltaX : deltaY;
-    if (gesture.route === "horizontal" && directedDelta <= 0) return;
-    const edge = gesture.route === "horizontal" ? "start" : gesture.edge ?? (directedDelta < 0 ? "end" : "start");
-    gesture.edge = edge;
-    const bandRect = gesture.band.getBoundingClientRect();
-    const referenceLength = Math.max(24, axis === "horizontal" ? bandRect.width : bandRect.height);
-    const segmentCount = gesture.route === "horizontal" ? horizontalSegments.length
-      : gesture.route === "vertical" ? verticalSegments.length
-      : gesture.route === "connector" ? connectorSegments.length : 1;
-    const movementDistance = gesture.route === "horizontal" ? Math.max(0, deltaX) : distance;
-    const movement = movementDistance / referenceLength / segmentCount;
-    setProgress(gesture.route, edge, state.progress[gesture.route][edge] + movement * 1.8, point);
-  }
-}
-
-function onPointerUp(event) {
-  if (!gesture || gesture.id !== event.pointerId) return;
-  clearGesture();
-}
-
-function onPointerCancel(event) {
-  if (!gesture || gesture.id !== event.pointerId) return;
-  clearGesture();
-}
-
 function onHoverMove(event) {
   if (event.pointerType !== "mouse" || state.phase !== "ready" || gesture) return;
   const rect = boxContainer.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width - 0.5;
   const y = (event.clientY - rect.top) / rect.height - 0.5;
-  giftBox.style.transform = `translateY(-5px) rotateX(${-17 - y * 8}deg) rotateY(${-31 + x * 16}deg)`;
+  giftBox.style.transform = `scale(var(--gift-scale, .75)) translateY(-5px) rotateX(${-17 - y * 8}deg) rotateY(${-31 + x * 16}deg)`;
 }
 
 function resetHover(event) {
@@ -328,32 +243,111 @@ function resetHover(event) {
   giftBox.style.removeProperty("transform");
 }
 
-giftBox.addEventListener("keydown", event => {
-  if (!state.landed) return;
-  if (state.phase === "ready" && event.target.closest(".gift-box__bow") && (event.key === "Enter" || event.key === " ")) {
-    event.preventDefault();
-    setPhase("bow-dropping");
+function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
+  if (state.phase !== "tearing" || state.ribbonStep !== expectedStep) return;
+  const step = ribbonSteps[state.ribbonStep];
+  setProgress(step.route, step.edge, 1, handPosition);
+  state.ribbonStep += 1;
+  if (state.ribbonStep === ribbonSteps.length) {
+    setPhase("unwrapped");
+  } else {
+    updateProgressUI();
+  }
+}
+
+function onProgressPointerDown(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (state.phase !== "tearing" && state.phase !== "unlocked") return;
+  event.preventDefault();
+  progressThumb.classList.add("is-pressed");
+  gesture = {
+    id: event.pointerId,
+    mode: state.phase === "tearing" ? "ribbon" : "open",
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false
+  };
+  if (gesture.mode === "ribbon") {
+    const step = ribbonSteps[state.ribbonStep];
+    gesture.step = step;
+    gesture.stepIndex = state.ribbonStep;
+    gesture.startProgress = state.progress[step.route][step.edge];
+  }
+  progressThumb.setPointerCapture(event.pointerId);
+}
+
+function onProgressPointerMove(event) {
+  if (!gesture || gesture.id !== event.pointerId) return;
+  const deltaX = event.clientX - gesture.startX;
+  const deltaY = event.clientY - gesture.startY;
+  if (Math.hypot(deltaX, deltaY) > 4) gesture.moved = true;
+
+  if (gesture.mode === "open") {
+    const upwardDistance = -deltaY;
+    if (upwardDistance > 54 && upwardDistance > Math.abs(deltaX) * 1.15) {
+      setPhase("opening");
+    }
     return;
   }
-  if (state.phase === "unlocked" && event.key === "ArrowUp") {
+
+  if (state.phase !== "tearing" || state.ribbonStep !== gesture.stepIndex) return;
+  const step = gesture.step;
+  const travel = Math.max(1, progress.clientWidth - progressThumb.offsetWidth);
+  const requested = gesture.startProgress + (deltaX * step.direction) / travel;
+  const nextProgress = Math.max(gesture.startProgress, Math.min(1, requested));
+  const handPoint = localPoint(event);
+  setProgress(step.route, step.edge, nextProgress, handPoint);
+  setThumbPosition(step.direction > 0 ? nextProgress : 1 - nextProgress);
+  if (nextProgress >= 0.94) completeRibbonStep(handPoint, gesture.stepIndex);
+}
+
+function onProgressPointerUp(event) {
+  if (!gesture || gesture.id !== event.pointerId) return;
+  if (gesture.moved) {
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 0);
+  }
+  gesture = null;
+  progressThumb.classList.remove("is-pressed");
+}
+
+progressThumb.addEventListener("click", () => {
+  if (suppressClick || !state.landed) return;
+  if (state.phase === "ready") {
+    setPhase("bow-dropping");
+  } else if (state.phase === "unwrapped") {
+    state.growth += 1;
+    boxContainer.style.setProperty("--gift-scale", `${0.75 + state.growth * 0.06}`);
+    if (state.growth === 3) {
+      setPhase("unlocked");
+    } else {
+      updateProgressUI();
+    }
+  }
+});
+progressThumb.addEventListener("keydown", event => {
+  if (state.phase === "tearing" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+    const step = ribbonSteps[state.ribbonStep];
+    const expectedKey = step.direction > 0 ? "ArrowRight" : "ArrowLeft";
+    if (event.key === expectedKey) {
+      event.preventDefault();
+      completeRibbonStep({ x: 0.5, y: 0.5 });
+    }
+  } else if (state.phase === "unlocked" && event.key === "ArrowUp") {
     event.preventDefault();
     setPhase("opening");
   }
 });
-lock.addEventListener("click", () => {
-  if (state.phase !== "unwrapped") return;
-  state.lockTaps += 1;
-  lock.dataset.taps = String(Math.min(state.lockTaps, 2));
-  if (state.lockTaps >= 3) setPhase("unlocked");
-});
+progressThumb.addEventListener("pointerdown", onProgressPointerDown);
+progressThumb.addEventListener("pointermove", onProgressPointerMove);
+progressThumb.addEventListener("pointerup", onProgressPointerUp);
+progressThumb.addEventListener("pointercancel", onProgressPointerUp);
+progressThumb.addEventListener("lostpointercapture", onProgressPointerUp);
+window.addEventListener("resize", () => setThumbPosition(state.sliderPosition));
+
 bow.addEventListener("animationend", event => {
   if (event.target === bow && state.phase === "bow-dropping") setPhase("tearing");
 });
-giftBox.addEventListener("pointerdown", onPointerDown);
-giftBox.addEventListener("pointermove", onPointerMove);
-giftBox.addEventListener("pointerup", onPointerUp);
-giftBox.addEventListener("pointercancel", onPointerCancel);
-giftBox.addEventListener("lostpointercapture", onPointerCancel);
 boxContainer.addEventListener("pointermove", onHoverMove);
 boxContainer.addEventListener("pointerleave", resetHover);
 boxContainer.addEventListener("animationend", event => {
@@ -373,6 +367,7 @@ function dropGift() {
     boxContainer.classList.remove("is-falling");
     boxContainer.classList.add("is-landed");
     state.landed = true;
+    updateProgressUI();
     return;
   }
 
@@ -396,6 +391,7 @@ function dropGift() {
         boxContainer.classList.remove("is-falling");
         boxContainer.classList.add("is-landed");
         state.landed = true;
+        updateProgressUI();
         return;
       }
     }
