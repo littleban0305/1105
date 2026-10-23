@@ -19,8 +19,15 @@ const lid = document.querySelector("#giftLid");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const progress = document.querySelector("#giftProgress");
 const progressThumb = document.querySelector("#progressThumb");
+const progressIconPath = document.querySelector("#progressIconPath");
 const instruction = document.querySelector("#giftInstruction");
-const progressIcons = [...progressThumb.querySelectorAll("[data-progress-icon]")];
+const progressIconPaths = {
+  lock: "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM9 6a3 3 0 1 1 6 0v2H9Zm3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z",
+  "arrow-forward": "M12 4 10.59 5.41 16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
+  "arrow-back": "m12 20 1.41-1.41L7.83 13H20v-2H7.83l5.58-5.59L12 4 4 12z",
+  touch: "M9 11.24V5a2 2 0 0 1 4 0v6.24l1.76.27 5.16.79a2 2 0 0 1 1.64 2.46l-1.61 6.44A3 3 0 0 1 17.04 23H9.7a3 3 0 0 1-2.34-1.12L2.7 16.3a2 2 0 0 1 3-2.63l3.3 2.9z",
+  "arrow-up": "m12 4-8 8 1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12z"
+};
 const ribbonSteps = [
   { route: "horizontal", edge: "start", direction: 1 },
   { route: "vertical", edge: "end", direction: -1 },
@@ -106,9 +113,8 @@ function updateProgressUI() {
     disabled = true;
   }
 
-  for (const progressIcon of progressIcons) {
-    progressIcon.hidden = progressIcon.dataset.progressIcon !== icon;
-  }
+  progressIconPath.setAttribute("d", progressIconPaths[icon]);
+  progressThumb.dataset.icon = icon;
   progressThumb.setAttribute("aria-label", label);
   progressThumb.disabled = disabled;
   instruction.textContent = message;
