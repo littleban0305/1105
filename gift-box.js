@@ -208,7 +208,12 @@ function setPhase(next) {
     envelope.style.width = `${envelopeWidth}px`;
     envelope.style.setProperty("--flight-x", `${window.innerWidth / 2 - startX}px`);
     envelope.style.setProperty("--flight-y", `${window.innerHeight / 2 - startY}px`);
+    boxContainer.classList.add("is-envelope-covering");
     envelope.classList.add("is-emerging");
+    window.setTimeout(() => {
+      boxContainer.classList.remove("is-envelope-covering");
+      envelope.classList.add("is-lifted");
+    }, reducedMotion.matches ? 60 : 620);
     window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 1100);
   } else if (next === "box-exiting") {
     boxContainer.classList.add("is-box-exiting");
@@ -243,7 +248,7 @@ function setPhase(next) {
         envelopeCard.style.top = `${(window.innerHeight - cardBounds.height) / 2}px`;
       }));
       window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 850);
-    }, reducedMotion.matches ? 60 : 760);
+    }, reducedMotion.matches ? 60 : 780);
   }
   updateProgressUI();
   return true;
