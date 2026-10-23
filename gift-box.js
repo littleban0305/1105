@@ -199,22 +199,25 @@ function setPhase(next) {
     boxContainer.classList.add("is-opened");
     setPhase("envelope-appearing");
   } else if (next === "envelope-appearing") {
-    const boxBounds = boxContainer.getBoundingClientRect();
-    const envelopeWidth = envelope.getBoundingClientRect().width;
-    const startX = boxBounds.left + boxBounds.width / 2;
-    const startY = boxBounds.top + boxBounds.height / 2;
-    envelope.style.left = `${startX}px`;
-    envelope.style.top = `${startY}px`;
-    envelope.style.width = `${envelopeWidth}px`;
-    envelope.style.setProperty("--flight-x", `${window.innerWidth / 2 - startX}px`);
-    envelope.style.setProperty("--flight-y", `${window.innerHeight / 2 - startY}px`);
-    boxContainer.classList.add("is-envelope-covering");
     envelope.classList.add("is-emerging");
     window.setTimeout(() => {
-      boxContainer.classList.remove("is-envelope-covering");
+      const riseBounds = envelope.getBoundingClientRect();
       envelope.classList.add("is-lifted");
-    }, reducedMotion.matches ? 60 : 620);
-    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 1100);
+      envelope.style.transform = "translate(-50%, -50%)";
+      envelope.style.left = `${riseBounds.left + riseBounds.width / 2}px`;
+      envelope.style.top = `${riseBounds.top + riseBounds.height / 2}px`;
+      envelope.style.width = `${riseBounds.width}px`;
+      envelope.style.height = `${riseBounds.height}px`;
+      document.querySelector(".experience").append(envelope);
+      const bounds = envelope.getBoundingClientRect();
+      const centerX = bounds.left + bounds.width / 2;
+      const centerY = bounds.top + bounds.height / 2;
+      envelope.classList.remove("is-emerging");
+      envelope.style.setProperty("--flight-x", `${window.innerWidth / 2 - centerX}px`);
+      envelope.style.setProperty("--flight-y", `${window.innerHeight / 2 - centerY}px`);
+      requestAnimationFrame(() => envelope.classList.add("is-flying-center"));
+    }, reducedMotion.matches ? 60 : 520);
+    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 120 : 1100);
   } else if (next === "box-exiting") {
     boxContainer.classList.add("is-box-exiting");
     window.setTimeout(() => {

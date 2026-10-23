@@ -529,16 +529,16 @@
     .gift-box-container.is-tear-bumping { animation: gift-box-tear-bump 430ms cubic-bezier(.2,.72,.25,1); }
     .gift-box-container.is-box-exiting { animation: gift-box-exit 650ms cubic-bezier(.4,0,.8,.4) forwards; }
     .gift-box-container.is-box-gone { visibility: hidden; }
-    .gift-box-container.is-envelope-covering { z-index: 4; }
-
     .gift-envelope {
-      position: fixed;
+      position: absolute;
       z-index: 3;
+      top: 50%;
+      left: 50%;
       width: min(82vw, 320px);
       aspect-ratio: 1.55;
       visibility: hidden;
       opacity: 0;
-      transform: translate(-50%, -50%) scale(.55) rotate(-8deg);
+      transform: translate(-50%, -50%) translateZ(12px) scale(.55) rotate(-8deg);
       transform-style: preserve-3d;
       perspective: 800px;
       pointer-events: none;
@@ -547,10 +547,18 @@
     .gift-envelope.is-emerging {
       visibility: visible;
       opacity: 1;
-      animation: envelope-flight 1100ms cubic-bezier(.2,.75,.25,1) both;
+      animation: envelope-pop-out 520ms cubic-bezier(.2,.75,.25,1) both;
     }
 
-    .gift-envelope.is-lifted { z-index: 5; }
+    .gift-envelope.is-lifted {
+      position: fixed;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+    }
+
+    .gift-envelope.is-flying-center {
+      animation: envelope-center-flight 580ms cubic-bezier(.2,.75,.25,1) both;
+    }
 
     .gift-envelope__scene {
       position: absolute;
@@ -697,21 +705,22 @@
       to { transform: translate3d(120vw, -20px, 0) rotate(22deg); opacity: 0; }
     }
 
-    @keyframes envelope-flight {
-      0% { opacity: 0; transform: translate(-50%, -50%) scale(.55) rotate(-8deg); }
-      18% { opacity: 1; transform: translate(-50%, -50%) scale(.72) rotate(2deg); }
+    @keyframes envelope-pop-out {
+      0% { opacity: 0; transform: translate(-50%, -50%) translateZ(12px) scale(.55) rotate(-8deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) translateZ(16px) scale(.72) rotate(2deg); }
+      58% { opacity: 1; transform: translate(-50%, calc(-50% - 110px)) translateZ(42px) scale(1.05) rotate(3deg); }
+      100% { opacity: 1; transform: translate(-50%, calc(-50% - 120px)) translateZ(48px) scale(1) rotate(0); }
+    }
+
+    @keyframes envelope-center-flight {
+      0% { transform: translate(-50%, -50%); }
       58% {
-        opacity: 1;
-        transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y) - 150px)) scale(1.05) rotate(3deg);
+        transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y) - 56px)) scale(1.05) rotate(3deg);
       }
       78% {
-        opacity: 1;
-        transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y) - 20px)) scale(.98) rotate(-1deg);
+        transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y) + 8px)) scale(.98) rotate(-1deg);
       }
-      100% {
-        opacity: 1;
-        transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y))) scale(1) rotate(0);
-      }
+      100% { transform: translate(calc(-50% + var(--flight-x)), calc(-50% + var(--flight-y))); }
     }
 
     @keyframes envelope-heart-drop {
@@ -771,19 +780,19 @@
           </div>
         </div>
         <div class="gift-box__glow" aria-hidden="true"></div>
-        </div>
-      </section>
-      <div class="gift-envelope" id="giftEnvelope" aria-hidden="true">
-        <div class="gift-envelope__scene">
-          <div class="gift-envelope__back"></div>
-          <div class="gift-envelope__card" id="envelopeCard"></div>
-          <div class="gift-envelope__front"></div>
-          <div class="gift-envelope__flap" id="envelopeFlap"></div>
-          <div class="gift-envelope__heart" id="envelopeHeart">
-            <svg viewBox="0 0 48 48"><path d="M24 42 6.6 25.2A11.4 11.4 0 0 1 22.8 9.1L24 10.3l1.2-1.2a11.4 11.4 0 0 1 16.2 16.1Z"/></svg>
+        <div class="gift-envelope" id="giftEnvelope" aria-hidden="true">
+          <div class="gift-envelope__scene">
+            <div class="gift-envelope__back"></div>
+            <div class="gift-envelope__card" id="envelopeCard"></div>
+            <div class="gift-envelope__front"></div>
+            <div class="gift-envelope__flap" id="envelopeFlap"></div>
+            <div class="gift-envelope__heart" id="envelopeHeart">
+              <svg viewBox="0 0 48 48"><path d="M24 42 6.6 25.2A11.4 11.4 0 0 1 22.8 9.1L24 10.3l1.2-1.2a11.4 11.4 0 0 1 16.2 16.1Z"/></svg>
+            </div>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
       <div class="gift-progress" id="giftProgress">
         <div class="gift-progress__track" aria-hidden="true"></div>
         <button class="gift-progress__thumb" id="progressThumb" type="button" aria-label="點擊小手，讓蝴蝶結落下" disabled>
@@ -793,6 +802,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=layered-extraction" defer></script>
+  <script src="gift-box.js?v=envelope-layer-order" defer></script>
 </body>
 </html>
