@@ -199,8 +199,17 @@ function setPhase(next) {
     boxContainer.classList.add("is-opened");
     setPhase("envelope-appearing");
   } else if (next === "envelope-appearing") {
-    envelope.classList.add("is-visible");
-    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 900);
+    const boxBounds = boxContainer.getBoundingClientRect();
+    const envelopeWidth = envelope.getBoundingClientRect().width;
+    const startX = boxBounds.left + boxBounds.width / 2;
+    const startY = boxBounds.top + boxBounds.height / 2;
+    envelope.style.left = `${startX}px`;
+    envelope.style.top = `${startY}px`;
+    envelope.style.width = `${envelopeWidth}px`;
+    envelope.style.setProperty("--flight-x", `${window.innerWidth / 2 - startX}px`);
+    envelope.style.setProperty("--flight-y", `${window.innerHeight / 2 - startY}px`);
+    envelope.classList.add("is-emerging");
+    window.setTimeout(() => setPhase("box-exiting"), reducedMotion.matches ? 60 : 1100);
   } else if (next === "box-exiting") {
     boxContainer.classList.add("is-box-exiting");
     window.setTimeout(() => {
