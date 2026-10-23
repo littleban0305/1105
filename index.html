@@ -531,7 +531,7 @@
     .gift-box-container.is-box-gone { visibility: hidden; }
     .gift-envelope {
       position: absolute;
-      z-index: 3;
+      z-index: 5;
       top: 50%;
       left: 50%;
       width: min(82vw, 320px);
@@ -552,7 +552,9 @@
 
     .gift-envelope.is-lifted {
       position: fixed;
-      z-index: 5;
+      z-index: 10;
+      visibility: visible;
+      opacity: 1;
       transform: translate(-50%, -50%);
     }
 
@@ -802,6 +804,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=envelope-layer-order" defer></script>
+  <script src="gift-box.js?v=envelope-layer-visible" defer></script>
 </body>
 </html>
