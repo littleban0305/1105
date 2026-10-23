@@ -151,7 +151,7 @@ function updateProgressUI() {
     position = 0.5;
     disabled = false;
   } else if (state.phase === "card-revealed") {
-    label = "卡片正在展開";
+    label = "卡片已展開";
     position = 0.5;
     disabled = true;
   }
@@ -253,8 +253,23 @@ function setPhase(next) {
       window.setTimeout(() => setPhase("card-revealed"), reducedMotion.matches ? 60 : 850);
     }, reducedMotion.matches ? 60 : 780);
   } else if (next === "card-revealed") {
+    const image = document.createElement("img");
+    image.className = "gift-envelope__card-image";
+    image.src = "assets/card.png";
+    image.alt = "生日卡片";
+    envelopeCard.append(image);
+
+    const aspectRatio = 1080 / 1920;
+    const openWidth = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9 * aspectRatio);
+    const openHeight = openWidth / aspectRatio;
     envelopeCard.classList.add("is-card-opening");
-    window.setTimeout(() => window.location.assign("1105.html"), reducedMotion.matches ? 150 : 950);
+    void envelopeCard.offsetWidth;
+    requestAnimationFrame(() => {
+      envelopeCard.style.left = `${(window.innerWidth - openWidth) / 2}px`;
+      envelopeCard.style.top = `${(window.innerHeight - openHeight) / 2}px`;
+      envelopeCard.style.width = `${openWidth}px`;
+      envelopeCard.style.height = `${openHeight}px`;
+    });
   }
   updateProgressUI();
   return true;

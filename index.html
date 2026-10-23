@@ -683,9 +683,34 @@
     }
 
     .gift-envelope__card.is-card-opening {
-      transform-origin: center;
-      animation: card-opening 900ms cubic-bezier(.2,.75,.25,1) both;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      box-shadow: 0 18px 30px #10294340;
+      transition:
+        left 900ms cubic-bezier(.2,.75,.25,1),
+        top 900ms cubic-bezier(.2,.75,.25,1),
+        width 900ms cubic-bezier(.2,.75,.25,1),
+        height 900ms cubic-bezier(.2,.75,.25,1),
+        border-radius 900ms ease,
+        box-shadow 900ms ease;
     }
+
+    .gift-envelope__card.is-card-opening::before,
+    .gift-envelope__card.is-card-opening::after { opacity: 0; }
+
+    .gift-envelope__card-image {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 300ms ease 600ms;
+    }
+
+    .gift-envelope__card.is-card-opening .gift-envelope__card-image { opacity: 1; }
 
     @keyframes gift-box-tear-bump {
       0%, 100% { transform: translate3d(0, var(--fall-y, 0px), 0); }
@@ -743,10 +768,12 @@
       100% { z-index: 6; transform: translate3d(0, -135%, 45px) rotate(-3deg); }
     }
 
-    @keyframes card-opening {
-      0% { transform: scale(1); box-shadow: 0 2px 5px #10294322; }
-      45% { transform: scale(1.08, .9) rotateX(12deg); box-shadow: 0 12px 20px #10294335; }
-      100% { transform: scale(1.45, 2.2); box-shadow: 0 18px 30px #10294340; }
+    @media (prefers-reduced-motion: reduce) {
+      .gift-envelope__card.is-card-opening,
+      .gift-envelope__card-image {
+        transition-duration: 1ms;
+        transition-delay: 0ms;
+      }
     }
   </style>
 </head>
@@ -817,6 +844,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=card-page-20261023" defer></script>
+  <script src="gift-box.js?v=card-image-reveal-20261023" defer></script>
 </body>
 </html>
