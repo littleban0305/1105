@@ -257,6 +257,11 @@ function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
 
 function onProgressPointerDown(event) {
   if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (state.phase === "ready") {
+    event.preventDefault();
+    startBowDrop();
+    return;
+  }
   if (state.phase !== "tearing" && state.phase !== "unlocked") return;
   event.preventDefault();
   progressThumb.classList.add("is-pressed");
@@ -274,6 +279,11 @@ function onProgressPointerDown(event) {
     gesture.startProgress = state.progress[step.route][step.edge];
   }
   progressThumb.setPointerCapture(event.pointerId);
+}
+
+function startBowDrop() {
+  if (!state.landed || state.phase !== "ready") return;
+  setPhase("bow-dropping");
 }
 
 function onProgressPointerMove(event) {
@@ -314,7 +324,7 @@ function onProgressPointerUp(event) {
 progressThumb.addEventListener("click", () => {
   if (suppressClick || !state.landed) return;
   if (state.phase === "ready") {
-    setPhase("bow-dropping");
+    startBowDrop();
   } else if (state.phase === "unwrapped") {
     state.growth += 1;
     boxContainer.style.setProperty("--gift-scale", `${0.75 + state.growth * 0.06}`);
