@@ -65,6 +65,8 @@ function updateProgressUI() {
   let position = 0;
 
   if (state.phase === "bow-dropping") {
+    icon = "arrow-forward";
+    label = "蝴蝶結落下後，向右滑動拆開緞帶";
     message = "蝴蝶結正在落下…";
     disabled = true;
   } else if (state.phase === "tearing") {
