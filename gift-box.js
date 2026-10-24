@@ -455,10 +455,37 @@ function onBoxPointerUp(event) {
 function onEnvelopePointerDown(event) {
   if (!envelope.classList.contains("is-rotatable")) return;
   envelopeDrag = startSurfaceRotation(event, envelope, envelopeRotation);
-  if (envelopeDrag) envelope.classList.add("is-rotating");
+  if (envelopeDrag) {
+    envelopeDrag.mode = null;
+    envelope.classList.add("is-rotating");
+  }
 }
 
 function onEnvelopePointerMove(event) {
+  if (!envelopeDrag || envelopeDrag.id !== event.pointerId) return;
+  if (!envelopeDrag.mode) {
+    const deltaX = event.clientX - envelopeDrag.startX;
+    const deltaY = event.clientY - envelopeDrag.startY;
+    if (Math.hypot(deltaX, deltaY) < 8) return;
+    envelopeDrag.mode = Math.abs(deltaY) > Math.abs(deltaX) * 1.15 ? "swipe" : "rotate";
+    if (envelopeDrag.mode === "swipe") {
+      envelope.style.setProperty("--envelope-rotate-x", `${envelopeDrag.rotationX}deg`);
+      envelope.style.setProperty("--envelope-rotate-y", `${envelopeDrag.rotationY}deg`);
+    }
+  }
+
+  if (envelopeDrag.mode === "swipe") {
+    const upwardDistance = envelopeDrag.startY - event.clientY;
+    if (upwardDistance > 54 && upwardDistance > Math.abs(event.clientX - envelopeDrag.startX) * 1.15) {
+      if (state.phase === "envelope-ready") setPhase("envelope-opening");
+      else if (state.phase === "envelope-open") setPhase("card-exiting");
+      else return;
+      envelopeDrag = null;
+      envelope.classList.remove("is-rotating");
+    }
+    return;
+  }
+
   updateSurfaceRotation(event, envelopeDrag, envelope, "envelope", envelopeRotation);
 }
 
