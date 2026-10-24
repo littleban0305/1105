@@ -30,6 +30,7 @@
       background-size: cover;
       background-repeat: no-repeat;
       font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      overflow-x: clip;
     }
 
     body.is-entry-guide::after {
@@ -37,7 +38,6 @@
       z-index: 20;
       inset: 0;
       background: rgba(83, 89, 92, .52);
-      backdrop-filter: grayscale(1) brightness(.72);
       content: "";
       pointer-events: none;
     }
@@ -48,13 +48,13 @@
       display: grid;
       place-items: center;
       padding: max(26px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
-      overflow-x: hidden;
       overflow-y: auto;
     }
 
     .container {
       width: min(100%, 560px);
       margin-inline: auto;
+      min-width: 0;
     }
 
     .row {
@@ -100,7 +100,8 @@
 
     .box {
       position: relative;
-      width: min(88vw, 420px);
+      width: min(88vw, 420px, 100%);
+      margin-inline: auto;
       aspect-ratio: 1000 / 700;
     }
 
@@ -212,21 +213,20 @@
 
     .interaction-guide {
       position: relative;
-      left: 50%;
       z-index: 21;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: clamp(5px, 1.6vw, 8px);
       width: 100vw;
-      margin: -3px auto 0;
+      margin: -3px calc(50% - 50vw) 0;
       color: #fff;
-      font-size: 20px;
+      font-size: clamp(16px, 5vw, 24px);
       font-weight: 700;
       line-height: 1.4;
       text-shadow: 0 1px 5px #172a3a;
       pointer-events: none;
-      transform: translateX(-50%);
+      white-space: nowrap;
     }
 
     .interaction-guide p { margin: 0; }
@@ -234,8 +234,14 @@
     .interaction-guide__divider {
       width: 100%;
       height: 2px;
+      flex: 0 0 2px;
       background: #fff;
       box-shadow: 0 1px 4px #172a3a;
+    }
+
+    @media (max-width: 360px) {
+      main { padding-right: 12px; padding-left: 12px; }
+      .interaction-guide { font-size: clamp(15px, 4.8vw, 17px); }
     }
 
     .gift-progress__track {
