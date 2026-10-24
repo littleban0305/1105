@@ -65,11 +65,25 @@ const state = {
   ribbonStep: 0,
   growth: 0,
   sliderPosition: 0,
-  landed: false
+  landed: false,
+  rotationX: -17,
+  rotationY: -31
 };
 let gesture = null;
+let boxDrag = null;
 let suppressClick = false;
 let vibrationTimer = 0;
+
+function clampBoxAngle(angle) {
+  return Math.max(-45, Math.min(45, angle));
+}
+
+function setBoxRotation(rotationX, rotationY) {
+  state.rotationX = clampBoxAngle(rotationX);
+  state.rotationY = clampBoxAngle(rotationY);
+  giftBox.style.setProperty("--gift-rotate-x", `${state.rotationX}deg`);
+  giftBox.style.setProperty("--gift-rotate-y", `${state.rotationY}deg`);
+}
 
 function vibrate(duration = 18) {
   if (typeof navigator.vibrate === "function") navigator.vibrate(duration);
@@ -358,16 +372,48 @@ function localPoint(event) {
 }
 
 function onHoverMove(event) {
-  if (event.pointerType !== "mouse" || state.phase !== "ready" || gesture) return;
+  if (event.pointerType !== "mouse" || state.phase !== "ready" || gesture || boxDrag) return;
   const rect = boxContainer.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width - 0.5;
   const y = (event.clientY - rect.top) / rect.height - 0.5;
-  giftBox.style.transform = `scale(var(--gift-scale, .75)) translateY(-5px) rotateX(${-17 - y * 8}deg) rotateY(${-31 + x * 16}deg)`;
+  const rotationX = clampBoxAngle(state.rotationX - y * 8);
+  const rotationY = clampBoxAngle(state.rotationY + x * 16);
+  giftBox.style.transform = `scale(var(--gift-scale, .75)) translateY(-5px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
 }
 
 function resetHover(event) {
-  if (event.pointerType !== "mouse" || state.phase !== "ready" || gesture) return;
+  if (event.pointerType !== "mouse" || state.phase !== "ready" || gesture || boxDrag) return;
   giftBox.style.removeProperty("transform");
+}
+
+function onBoxPointerDown(event) {
+  if (!state.landed || !["ready", "tearing", "unwrapped", "unlocked"].includes(state.phase) ||
+    (event.pointerType === "mouse" && event.button !== 0)) return;
+  event.preventDefault();
+  boxDrag = {
+    id: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    rotationX: state.rotationX,
+    rotationY: state.rotationY
+  };
+  giftBox.style.removeProperty("transform");
+  boxContainer.classList.add("is-rotating");
+  boxContainer.setPointerCapture(event.pointerId);
+}
+
+function onBoxPointerMove(event) {
+  if (!boxDrag || boxDrag.id !== event.pointerId) return;
+  setBoxRotation(
+    boxDrag.rotationX - (event.clientY - boxDrag.startY) * 0.5,
+    boxDrag.rotationY + (event.clientX - boxDrag.startX) * 0.5
+  );
+}
+
+function onBoxPointerUp(event) {
+  if (!boxDrag || boxDrag.id !== event.pointerId) return;
+  boxDrag = null;
+  boxContainer.classList.remove("is-rotating");
 }
 
 function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
@@ -510,6 +556,11 @@ bow.addEventListener("animationend", event => {
   if (event.target === bow && state.phase === "bow-dropping") setPhase("tearing");
 });
 boxContainer.addEventListener("pointermove", onHoverMove);
+boxContainer.addEventListener("pointerdown", onBoxPointerDown);
+boxContainer.addEventListener("pointermove", onBoxPointerMove);
+boxContainer.addEventListener("pointerup", onBoxPointerUp);
+boxContainer.addEventListener("pointercancel", onBoxPointerUp);
+boxContainer.addEventListener("lostpointercapture", onBoxPointerUp);
 boxContainer.addEventListener("pointerleave", resetHover);
 boxContainer.addEventListener("animationend", event => {
   if (event.target !== boxContainer) return;
