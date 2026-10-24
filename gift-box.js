@@ -145,11 +145,13 @@ function setThumbPosition(position) {
 function updateProgressUI() {
   let icon = "touch";
   let label = "點擊小手，讓蝴蝶結落下";
-  let hint = state.landed ? "點擊！" : "";
+  let hint = "";
   let disabled = !state.landed;
   let position = 0.5;
 
-  if (state.phase === "bow-dropping") {
+  if (state.phase === "ready") {
+    if (state.landed) hint = "點擊！";
+  } else if (state.phase === "bow-dropping") {
     icon = "arrow-forward";
     label = "蝴蝶結落下後，向右滑動拆開緞帶";
     disabled = true;
