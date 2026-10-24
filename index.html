@@ -32,6 +32,16 @@
       font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
     }
 
+    body.is-entry-guide::after {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      background: rgba(83, 89, 92, .52);
+      backdrop-filter: grayscale(1) brightness(.72);
+      content: "";
+      pointer-events: none;
+    }
+
     main {
       min-height: 100vh;
       min-height: 100svh;
@@ -193,11 +203,34 @@
 
     .gift-progress__hint {
       min-height: 20px;
-      margin: 0;
+      margin: 7px 0 0;
       color: #8d6d37;
       font-size: 13px;
       font-weight: 700;
       line-height: 20px;
+    }
+
+    .interaction-guide {
+      position: relative;
+      z-index: 21;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: -3px auto 0;
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 18px;
+      pointer-events: none;
+    }
+
+    .interaction-guide p { margin: 0; }
+
+    .interaction-guide__divider {
+      width: min(76%, 260px);
+      height: 1px;
+      background: #8d6d37;
     }
 
     .gift-progress__track {
@@ -858,6 +891,11 @@
         </div>
         </div>
       </section>
+      <div class="interaction-guide" id="entryGuide" aria-hidden="true">
+        <p>拖曳即可旋轉檢視物品</p>
+        <div class="interaction-guide__divider"></div>
+        <p>這裡是操作區域</p>
+      </div>
       <div class="gift-progress" id="giftProgress">
         <div class="gift-progress__track" aria-hidden="true"></div>
         <button class="gift-progress__thumb" id="progressThumb" type="button" aria-label="點擊小手，讓蝴蝶結落下" disabled>
@@ -868,6 +906,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=card-reveal-20261024" defer></script>
+  <script src="gift-box.js?v=interaction-guide-20261024" defer></script>
 </body>
 </html>

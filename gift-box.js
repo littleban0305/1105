@@ -20,6 +20,7 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const progress = document.querySelector("#giftProgress");
 const progressThumb = document.querySelector("#progressThumb");
 const progressHint = document.querySelector("#progressHint");
+const entryGuide = document.querySelector("#entryGuide");
 const progressIconPath = document.querySelector("#progressIconPath");
 const envelope = document.querySelector("#giftEnvelope");
 const envelopeCard = document.querySelector("#envelopeCard");
@@ -78,6 +79,12 @@ const envelopeRotation = { x: -12, y: -18 };
 const cardRotation = { x: 0, y: 0 };
 let suppressClick = false;
 let vibrationTimer = 0;
+
+document.body.classList.add("is-entry-guide");
+document.addEventListener("pointerdown", () => {
+  document.body.classList.remove("is-entry-guide");
+  entryGuide.remove();
+}, { once: true, capture: true });
 
 function clampBoxAngle(angle) {
   return Math.max(-45, Math.min(45, angle));
