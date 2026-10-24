@@ -273,6 +273,13 @@ function setPhase(next) {
     image.alt = "生日卡片";
     envelopeCard.append(image);
 
+    const revealCardImage = event => {
+      if (event.target !== envelopeCard || event.propertyName !== "height") return;
+      envelopeCard.classList.add("is-card-image-visible");
+      envelopeCard.removeEventListener("transitionend", revealCardImage);
+    };
+    envelopeCard.addEventListener("transitionend", revealCardImage);
+
     const aspectRatio = 1080 / 1920;
     const openWidth = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9 * aspectRatio);
     const openHeight = openWidth / aspectRatio;

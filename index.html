@@ -685,9 +685,6 @@
     }
 
     .gift-envelope__card.is-card-opening {
-      border: 0;
-      border-radius: 8px;
-      background: transparent;
       box-shadow: 0 18px 30px #10294340;
       transition:
         left 900ms cubic-bezier(.2,.75,.25,1),
@@ -698,9 +695,6 @@
         box-shadow 900ms ease;
     }
 
-    .gift-envelope__card.is-card-opening::before,
-    .gift-envelope__card.is-card-opening::after { opacity: 0; }
-
     .gift-envelope__card-image {
       position: absolute;
       inset: 0;
@@ -709,10 +703,10 @@
       height: 100%;
       object-fit: contain;
       opacity: 0;
-      transition: opacity 300ms ease 600ms;
+      transition: opacity 300ms ease;
     }
 
-    .gift-envelope__card.is-card-opening .gift-envelope__card-image { opacity: 1; }
+    .gift-envelope__card.is-card-image-visible .gift-envelope__card-image { opacity: 1; }
 
     @keyframes gift-box-tear-bump {
       0%, 100% { transform: translate3d(0, var(--fall-y, 0px), 0); }
@@ -846,6 +840,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=card-image-reveal-20261023" defer></script>
+  <script src="gift-box.js?v=card-reveal-20261024" defer></script>
 </body>
 </html>
