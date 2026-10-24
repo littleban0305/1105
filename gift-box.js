@@ -19,6 +19,7 @@ const lid = document.querySelector("#giftLid");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const progress = document.querySelector("#giftProgress");
 const progressThumb = document.querySelector("#progressThumb");
+const progressHint = document.querySelector("#progressHint");
 const progressIconPath = document.querySelector("#progressIconPath");
 const envelope = document.querySelector("#giftEnvelope");
 const envelopeCard = document.querySelector("#envelopeCard");
@@ -137,6 +138,7 @@ function setThumbPosition(position) {
 function updateProgressUI() {
   let icon = "touch";
   let label = "點擊小手，讓蝴蝶結落下";
+  let hint = state.landed ? "點擊！" : "";
   let disabled = !state.landed;
   let position = 0.5;
 
@@ -148,16 +150,19 @@ function updateProgressUI() {
     const step = ribbonSteps[state.ribbonStep];
     icon = step.direction > 0 ? "arrow-forward" : "arrow-back";
     label = step.direction > 0 ? "向右滑動，拆開緞帶" : "向左滑動，拆開緞帶";
+    hint = step.direction > 0 ? "往右滑！" : "往左滑！";
     position = step.direction > 0 ? 0 : 1;
     disabled = false;
   } else if (state.phase === "unwrapped") {
     icon = "touch";
     label = "點擊放大禮物盒";
+    hint = "點擊！";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "unlocked") {
     icon = "arrow-up";
     label = "向上滑動，開啟禮物盒";
+    hint = "往上滑！";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "opening") {
@@ -171,6 +176,7 @@ function updateProgressUI() {
     disabled = true;
   } else if (state.phase === "envelope-heart") {
     label = "點擊小手，讓愛心掉下來";
+    hint = "點擊！";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "heart-dropping" || state.phase === "envelope-opening" ||
@@ -183,11 +189,13 @@ function updateProgressUI() {
   } else if (state.phase === "envelope-ready") {
     icon = "arrow-up";
     label = "向上滑動，打開信封";
+    hint = "往上滑！";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "envelope-open") {
     icon = "arrow-up";
     label = "再次向上滑動，取出卡片";
+    hint = "往上滑！";
     position = 0.5;
     disabled = false;
   } else if (state.phase === "card-revealed") {
@@ -200,6 +208,7 @@ function updateProgressUI() {
   progressThumb.dataset.icon = icon;
   progressThumb.setAttribute("aria-label", label);
   progressThumb.disabled = disabled;
+  progressHint.textContent = hint;
   setThumbPosition(position);
 }
 
