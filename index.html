@@ -569,9 +569,17 @@
     .gift-envelope__scene {
       position: absolute;
       inset: 0;
-      transform: rotateX(-12deg) rotateY(-18deg);
+      transform: rotateX(var(--envelope-rotate-x, -12deg)) rotateY(var(--envelope-rotate-y, -18deg));
       transform-style: preserve-3d;
     }
+
+    .gift-envelope.is-rotatable {
+      pointer-events: auto;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .gift-envelope.is-rotating { cursor: grabbing; }
 
     .gift-envelope__back {
       position: absolute;
@@ -679,10 +687,17 @@
       position: fixed;
       z-index: 10;
       margin: 0;
-      transform: none;
+      transform: perspective(900px) rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg));
       transition: top 800ms cubic-bezier(.2,.75,.25,1), left 800ms cubic-bezier(.2,.75,.25,1);
       will-change: top, left;
     }
+
+    .gift-envelope__card.is-card-rotatable {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .gift-envelope__card.is-card-rotating { cursor: grabbing; }
 
     .gift-envelope__card.is-card-opening {
       box-shadow: 0 18px 30px #10294340;
@@ -707,6 +722,9 @@
     }
 
     .gift-envelope__card.is-card-image-visible .gift-envelope__card-image { opacity: 1; }
+
+    .gift-envelope__card.is-card-image-visible::before,
+    .gift-envelope__card.is-card-image-visible::after { display: none; }
 
     @keyframes gift-box-tear-bump {
       0%, 100% { transform: translate3d(0, var(--fall-y, 0px), 0); }

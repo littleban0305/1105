@@ -71,11 +71,37 @@ const state = {
 };
 let gesture = null;
 let boxDrag = null;
+let envelopeDrag = null;
+let cardDrag = null;
+const envelopeRotation = { x: -12, y: -18 };
+const cardRotation = { x: 0, y: 0 };
 let suppressClick = false;
 let vibrationTimer = 0;
 
 function clampBoxAngle(angle) {
   return Math.max(-45, Math.min(45, angle));
+}
+
+function startSurfaceRotation(event, surface, rotation) {
+  if (event.pointerType === "mouse" && event.button !== 0) return null;
+  event.preventDefault();
+  surface.setPointerCapture(event.pointerId);
+  return {
+    id: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    rotationX: rotation.x,
+    rotationY: rotation.y
+  };
+}
+
+function updateSurfaceRotation(event, drag, surface, prefix, rotation) {
+  if (!drag || drag.id !== event.pointerId) return false;
+  rotation.x = clampBoxAngle(drag.rotationX - (event.clientY - drag.startY) * 0.5);
+  rotation.y = clampBoxAngle(drag.rotationY + (event.clientX - drag.startX) * 0.5);
+  surface.style.setProperty(`--${prefix}-rotate-x`, `${rotation.x}deg`);
+  surface.style.setProperty(`--${prefix}-rotate-y`, `${rotation.y}deg`);
+  return true;
 }
 
 function setBoxRotation(rotationX, rotationY) {
@@ -217,6 +243,7 @@ function setPhase(next) {
     window.setTimeout(() => {
       const riseBounds = envelope.getBoundingClientRect();
       envelope.classList.add("is-lifted");
+      envelope.classList.add("is-rotatable");
       envelope.style.transform = "translate(-50%, -50%)";
       envelope.style.left = `${riseBounds.left + riseBounds.width / 2}px`;
       envelope.style.top = `${riseBounds.top + riseBounds.height / 2}px`;
@@ -250,13 +277,14 @@ function setPhase(next) {
     envelope.classList.add("is-open");
   } else if (next === "card-exiting") {
     envelope.classList.add("is-card-extracting");
+    envelope.classList.remove("is-rotatable");
     window.setTimeout(() => {
       const cardBounds = envelopeCard.getBoundingClientRect();
       envelopeCard.style.left = `${cardBounds.left}px`;
       envelopeCard.style.top = `${cardBounds.top}px`;
       envelopeCard.style.width = `${cardBounds.width}px`;
       envelopeCard.style.height = `${cardBounds.height}px`;
-      envelopeCard.style.transform = "none";
+      envelopeCard.style.removeProperty("transform");
       envelopeCard.classList.add("is-card-flight");
       document.querySelector(".experience").append(envelopeCard);
       setPhase("card-moving");
@@ -276,6 +304,7 @@ function setPhase(next) {
     const revealCardImage = event => {
       if (event.target !== envelopeCard || event.propertyName !== "height") return;
       envelopeCard.classList.add("is-card-image-visible");
+      envelopeCard.classList.add("is-card-rotatable");
       envelopeCard.removeEventListener("transitionend", revealCardImage);
     };
     envelopeCard.addEventListener("transitionend", revealCardImage);
@@ -421,6 +450,38 @@ function onBoxPointerUp(event) {
   if (!boxDrag || boxDrag.id !== event.pointerId) return;
   boxDrag = null;
   boxContainer.classList.remove("is-rotating");
+}
+
+function onEnvelopePointerDown(event) {
+  if (!envelope.classList.contains("is-rotatable")) return;
+  envelopeDrag = startSurfaceRotation(event, envelope, envelopeRotation);
+  if (envelopeDrag) envelope.classList.add("is-rotating");
+}
+
+function onEnvelopePointerMove(event) {
+  updateSurfaceRotation(event, envelopeDrag, envelope, "envelope", envelopeRotation);
+}
+
+function onEnvelopePointerUp(event) {
+  if (!envelopeDrag || envelopeDrag.id !== event.pointerId) return;
+  envelopeDrag = null;
+  envelope.classList.remove("is-rotating");
+}
+
+function onCardPointerDown(event) {
+  if (!envelopeCard.classList.contains("is-card-rotatable")) return;
+  cardDrag = startSurfaceRotation(event, envelopeCard, cardRotation);
+  if (cardDrag) envelopeCard.classList.add("is-card-rotating");
+}
+
+function onCardPointerMove(event) {
+  updateSurfaceRotation(event, cardDrag, envelopeCard, "card", cardRotation);
+}
+
+function onCardPointerUp(event) {
+  if (!cardDrag || cardDrag.id !== event.pointerId) return;
+  cardDrag = null;
+  envelopeCard.classList.remove("is-card-rotating");
 }
 
 function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
@@ -569,6 +630,16 @@ boxContainer.addEventListener("pointerup", onBoxPointerUp);
 boxContainer.addEventListener("pointercancel", onBoxPointerUp);
 boxContainer.addEventListener("lostpointercapture", onBoxPointerUp);
 boxContainer.addEventListener("pointerleave", resetHover);
+envelope.addEventListener("pointerdown", onEnvelopePointerDown);
+envelope.addEventListener("pointermove", onEnvelopePointerMove);
+envelope.addEventListener("pointerup", onEnvelopePointerUp);
+envelope.addEventListener("pointercancel", onEnvelopePointerUp);
+envelope.addEventListener("lostpointercapture", onEnvelopePointerUp);
+envelopeCard.addEventListener("pointerdown", onCardPointerDown);
+envelopeCard.addEventListener("pointermove", onCardPointerMove);
+envelopeCard.addEventListener("pointerup", onCardPointerUp);
+envelopeCard.addEventListener("pointercancel", onCardPointerUp);
+envelopeCard.addEventListener("lostpointercapture", onCardPointerUp);
 boxContainer.addEventListener("animationend", event => {
   if (event.target !== boxContainer) return;
   if (event.animationName === "gift-box-tap-bump") boxContainer.classList.remove("is-tap-bumping");
