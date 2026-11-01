@@ -27,9 +27,9 @@ const progressIconPaths = {
   "arrow-up": "m12 4-8 8 1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12z"
 };
 const ribbonSteps = [
-  { route: "horizontal", direction: 1 },
-  { route: "vertical", direction: -1 },
-  { route: "connector", direction: 1 }
+  { route: "horizontal", direction: 1 },  // 第 1 步：腰帶
+  { route: "connector", direction: -1 },  // 第 2 步：左右環
+  { route: "vertical", direction: 1 }     // 第 3 步：前後環
 ];
 
 const transitions = {
@@ -329,7 +329,7 @@ function setPhase(next) {
     const image = document.createElement("img");
     image.className = "gift-envelope__card-image";
     image.src = "assets/card.png";
-    image.alt = "生日卡片";
+    image.alt = "給你的卡片";
     envelopeCard.append(image);
 
     const revealCardImage = event => {
