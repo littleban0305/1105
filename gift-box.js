@@ -77,14 +77,37 @@ let envelopeDrag = null;
 let cardDrag = null;
 const envelopeRotation = { x: -12, y: -18 };
 const cardRotation = { x: 0, y: 0 };
-let suppressClick = false;
 let vibrationTimer = 0;
 
 document.body.classList.add("is-entry-guide");
 document.addEventListener("pointerdown", () => {
   document.body.classList.remove("is-entry-guide");
-  entryGuide.remove();
+  // 只隱藏、保留佔位，避免下方的小手往上跳
+  entryGuide.style.visibility = "hidden";
 }, { once: true, capture: true });
+
+// 3D 旋轉後的外框會讓長寬比走樣，改用「面積等比」換算出視覺大小，維持原本比例
+function getUndistortedRect(element) {
+  const rect = element.getBoundingClientRect();
+  const naturalWidth = element.offsetWidth;
+  const naturalHeight = element.offsetHeight;
+  const scale = Math.sqrt((rect.width * rect.height) / (naturalWidth * naturalHeight)) || 1;
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  return { width, height, centerX, centerY, left: centerX - width / 2, top: centerY - height / 2 };
+}
+
+function layoutOpenCard() {
+  const aspectRatio = 1080 / 1920;
+  const openWidth = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9 * aspectRatio);
+  const openHeight = openWidth / aspectRatio;
+  envelopeCard.style.left = `${(window.innerWidth - openWidth) / 2}px`;
+  envelopeCard.style.top = `${(window.innerHeight - openHeight) / 2}px`;
+  envelopeCard.style.width = `${openWidth}px`;
+  envelopeCard.style.height = `${openHeight}px`;
+}
 
 function clampBoxAngle(angle) {
   return Math.max(-45, Math.min(45, angle));
@@ -259,12 +282,12 @@ function setPhase(next) {
   } else if (next === "envelope-appearing") {
     envelope.classList.add("is-emerging");
     window.setTimeout(() => {
-      const riseBounds = envelope.getBoundingClientRect();
+      const riseBounds = getUndistortedRect(envelope);
       envelope.classList.add("is-lifted");
       envelope.classList.add("is-rotatable");
       envelope.style.transform = "translate(-50%, -50%)";
-      envelope.style.left = `${riseBounds.left + riseBounds.width / 2}px`;
-      envelope.style.top = `${riseBounds.top + riseBounds.height / 2}px`;
+      envelope.style.left = `${riseBounds.centerX}px`;
+      envelope.style.top = `${riseBounds.centerY}px`;
       envelope.style.width = `${riseBounds.width}px`;
       envelope.style.height = `${riseBounds.height}px`;
       document.querySelector(".experience").append(envelope);
@@ -297,7 +320,7 @@ function setPhase(next) {
     envelope.classList.add("is-card-extracting");
     envelope.classList.remove("is-rotatable");
     window.setTimeout(() => {
-      const cardBounds = envelopeCard.getBoundingClientRect();
+      const cardBounds = getUndistortedRect(envelopeCard);
       envelopeCard.style.left = `${cardBounds.left}px`;
       envelopeCard.style.top = `${cardBounds.top}px`;
       envelopeCard.style.width = `${cardBounds.width}px`;
@@ -327,17 +350,9 @@ function setPhase(next) {
     };
     envelopeCard.addEventListener("transitionend", revealCardImage);
 
-    const aspectRatio = 1080 / 1920;
-    const openWidth = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9 * aspectRatio);
-    const openHeight = openWidth / aspectRatio;
     envelopeCard.classList.add("is-card-opening");
     void envelopeCard.offsetWidth;
-    requestAnimationFrame(() => {
-      envelopeCard.style.left = `${(window.innerWidth - openWidth) / 2}px`;
-      envelopeCard.style.top = `${(window.innerHeight - openHeight) / 2}px`;
-      envelopeCard.style.width = `${openWidth}px`;
-      envelopeCard.style.height = `${openHeight}px`;
-    });
+    requestAnimationFrame(layoutOpenCard);
   }
   updateProgressUI();
   return true;
@@ -549,6 +564,13 @@ function onProgressPointerDown(event) {
     startBowDrop();
     return;
   }
+  if (state.phase === "unwrapped" || state.phase === "envelope-heart") {
+    event.preventDefault();
+    progressThumb.classList.add("is-pressed");
+    gesture = { id: event.pointerId, mode: "tap", startX: event.clientX, startY: event.clientY, moved: false };
+    progressThumb.setPointerCapture(event.pointerId);
+    return;
+  }
   const interactivePhase = ["tearing", "unlocked", "envelope-ready", "envelope-open"].includes(state.phase);
   if (!interactivePhase) return;
   event.preventDefault();
@@ -582,6 +604,11 @@ function onProgressPointerMove(event) {
   if (!gesture || gesture.id !== event.pointerId) return;
   const deltaX = event.clientX - gesture.startX;
   const deltaY = event.clientY - gesture.startY;
+  if (gesture.mode === "tap") {
+    // 手指滑太遠就不算點擊
+    if (Math.hypot(deltaX, deltaY) > 12) gesture.moved = true;
+    return;
+  }
   if (Math.hypot(deltaX, deltaY) > 4) {
     gesture.moved = true;
     startContinuousVibration();
@@ -593,6 +620,7 @@ function onProgressPointerMove(event) {
       if (gesture.mode === "open-gift") setPhase("opening");
       else if (gesture.mode === "open-envelope") setPhase("envelope-opening");
       else setPhase("card-exiting");
+      endGesture();
     }
     return;
   }
@@ -605,22 +633,38 @@ function onProgressPointerMove(event) {
   const handPoint = localPoint(event);
   setProgress(step.route, step.edge, nextProgress, handPoint);
   setThumbPosition(step.direction > 0 ? nextProgress : 1 - nextProgress);
-  if (nextProgress >= 0.94) completeRibbonStep(handPoint, gesture.stepIndex);
+  if (nextProgress >= 0.94) {
+    completeRibbonStep(handPoint, gesture.stepIndex);
+    endGesture();
+  }
+}
+
+// 手勢完成（或手指放開）時統一收尾：停震動、清狀態、釋放 pointer capture
+function endGesture() {
+  if (!gesture) return;
+  const { id } = gesture;
+  gesture = null;
+  stopContinuousVibration();
+  progressThumb.classList.remove("is-pressed");
+  if (progressThumb.hasPointerCapture(id)) progressThumb.releasePointerCapture(id);
 }
 
 function onProgressPointerUp(event) {
   if (!gesture || gesture.id !== event.pointerId) return;
-  stopContinuousVibration();
-  if (gesture.moved) {
-    suppressClick = true;
-    window.setTimeout(() => { suppressClick = false; }, 0);
-  }
-  gesture = null;
-  progressThumb.classList.remove("is-pressed");
+  const isTap = gesture.mode === "tap" && !gesture.moved && event.type === "pointerup";
+  endGesture();
+  if (isTap) runTapAction();
 }
 
-progressThumb.addEventListener("click", () => {
-  if (suppressClick || !state.landed) return;
+// 觸控/滑鼠的點擊在 pointerup 判定（見 onProgressPointerUp）；
+// click 只處理鍵盤或輔助工具觸發的（event.detail === 0），避免手機上點擊被吞掉或重複觸發
+progressThumb.addEventListener("click", event => {
+  if (event.detail !== 0) return;
+  runTapAction();
+});
+
+function runTapAction() {
+  if (!state.landed) return;
   if (state.phase === "ready") {
     startBowDrop();
   } else if (state.phase === "unwrapped") {
@@ -636,7 +680,7 @@ progressThumb.addEventListener("click", () => {
     vibrate();
     setPhase("heart-dropping");
   }
-});
+}
 progressThumb.addEventListener("keydown", event => {
   if (state.phase === "tearing" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
     const step = ribbonSteps[state.ribbonStep];
@@ -663,7 +707,11 @@ progressThumb.addEventListener("pointermove", onProgressPointerMove);
 progressThumb.addEventListener("pointerup", onProgressPointerUp);
 progressThumb.addEventListener("pointercancel", onProgressPointerUp);
 progressThumb.addEventListener("lostpointercapture", onProgressPointerUp);
-window.addEventListener("resize", () => setThumbPosition(state.sliderPosition));
+window.addEventListener("resize", () => {
+  setThumbPosition(state.sliderPosition);
+  // 網址列收起/展開會改變視窗高度，卡片要重新置中
+  if (state.phase === "card-revealed") layoutOpenCard();
+});
 
 bow.addEventListener("animationend", event => {
   if (event.target === bow && state.phase === "bow-dropping") setPhase("tearing");
