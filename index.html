@@ -859,12 +859,14 @@
         </div>
 
         <div class="gift-box__wrap" id="wrapping" aria-hidden="true">
-          <div class="gift-box__side gift-box__side--front"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="3"></span></div>
-          <div class="gift-box__side gift-box__side--back"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
-          <div class="gift-box__side gift-box__side--left"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
-          <div class="gift-box__side gift-box__side--right" data-ribbon-route="connector" data-ribbon-axis="vertical"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="2"></span></div>
-          <div class="gift-box__end gift-box__end--top"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="2"></span></div>
-          <div class="gift-box__end gift-box__end--bottom"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="4"></span></div>
+          <!-- 三條緞帶：horizontal = 腰帶（前→右→後→左）；vertical = 前後環（蓋頂→蓋前→前→底→後→蓋後）；connector = 左右環（蓋頂→蓋右→右→底→左→蓋左） -->
+          <!-- data-ribbon-segment = 在該條緞帶上的撕開順序；data-ribbon-from = 這一片從本地座標的哪一端開始撕 -->
+          <div class="gift-box__side gift-box__side--front"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="horizontal" data-ribbon-segment="0" data-ribbon-from="start"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="2" data-ribbon-from="start"></span></div>
+          <div class="gift-box__side gift-box__side--back"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="horizontal" data-ribbon-segment="2" data-ribbon-from="start"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="4" data-ribbon-from="end"></span></div>
+          <div class="gift-box__side gift-box__side--left"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="horizontal" data-ribbon-segment="3" data-ribbon-from="start"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="4" data-ribbon-from="end"></span></div>
+          <div class="gift-box__side gift-box__side--right"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="horizontal" data-ribbon-segment="1" data-ribbon-from="start"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="2" data-ribbon-from="start"></span></div>
+          <div class="gift-box__end gift-box__end--top"></div>
+          <div class="gift-box__end gift-box__end--bottom"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="connector" data-ribbon-segment="3" data-ribbon-from="end"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="3" data-ribbon-from="start"></span></div>
         </div>
 
         <div class="gift-box-lid" id="giftLid" aria-hidden="true">
@@ -875,12 +877,12 @@
           <div class="gift-box-lid__end gift-box-lid__end--top"></div>
           <div class="gift-box-lid__end gift-box-lid__end--bottom"></div>
           <div class="gift-box-lid__wrap">
-            <div class="gift-box-lid__side gift-box-lid__side--front"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="1"></span></div>
-            <div class="gift-box-lid__side gift-box-lid__side--back"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
-            <div class="gift-box-lid__side gift-box-lid__side--left"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
-            <div class="gift-box-lid__side gift-box-lid__side--right"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="1"></span></div>
-            <div class="gift-box-lid__end gift-box-lid__end--top" data-ribbon-route="connector" data-ribbon-axis="horizontal"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="connector" data-ribbon-segment="0"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="0"></span></div>
-            <div class="gift-box-lid__end gift-box-lid__end--bottom"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical"></span></div>
+            <div class="gift-box-lid__side gift-box-lid__side--front"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="1" data-ribbon-from="start"></span></div>
+            <div class="gift-box-lid__side gift-box-lid__side--back"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="5" data-ribbon-from="end"></span></div>
+            <div class="gift-box-lid__side gift-box-lid__side--left"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="5" data-ribbon-from="end"></span></div>
+            <div class="gift-box-lid__side gift-box-lid__side--right"><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="connector" data-ribbon-segment="1" data-ribbon-from="start"></span></div>
+            <div class="gift-box-lid__end gift-box-lid__end--top"><span class="gift-ribbon-band gift-ribbon-band--horizontal" data-ribbon="horizontal" data-ribbon-route="connector" data-ribbon-segment="0" data-ribbon-from="start"></span><span class="gift-ribbon-band gift-ribbon-band--vertical" data-ribbon="vertical" data-ribbon-route="vertical" data-ribbon-segment="0" data-ribbon-from="start"></span></div>
+            <div class="gift-box-lid__end gift-box-lid__end--bottom"></div>
           </div>
           <div class="gift-box__bow" aria-hidden="true">
             <span class="gift-box__bow-loop gift-box__bow-loop--left"></span>
@@ -917,6 +919,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=bugfix-20261101" defer></script>
+  <script src="gift-box.js?v=ribbon-loops-20261101" defer></script>
 </body>
 </html>

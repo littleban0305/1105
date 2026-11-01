@@ -1,19 +1,13 @@
 const giftBox = document.querySelector("#gift");
 const boxContainer = document.querySelector("#luckyBox");
-const ribbonBands = [...document.querySelectorAll("[data-ribbon]")];
-for (const band of ribbonBands) band.dataset.ribbonPath = band.dataset.ribbonRoute ?? band.dataset.ribbon;
-const verticalSegments = [...document.querySelectorAll('[data-ribbon-route="vertical"][data-ribbon-segment]')]
-  .sort((first, second) => Number(first.dataset.ribbonSegment) - Number(second.dataset.ribbonSegment));
-const connectorSegments = [...document.querySelectorAll('[data-ribbon-route="connector"][data-ribbon-segment]')]
-  .sort((first, second) => Number(first.dataset.ribbonSegment) - Number(second.dataset.ribbonSegment));
-const horizontalSegments = ribbonBands.filter(band => band.dataset.ribbon === "horizontal"
-  && band.dataset.ribbonRoute !== "connector");
-horizontalSegments.forEach((band, index) => {
-  band.dataset.horizontalSegment = String(index);
-});
-const verticalOtherBands = ribbonBands.filter(band => band.dataset.ribbon === "vertical"
-  && !band.hasAttribute("data-ribbon-segment")
-  && band.dataset.ribbonRoute !== "connector");
+// 三條緞帶，每條依 data-ribbon-segment 的順序一段一段撕開
+const ribbonRoutes = { horizontal: [], vertical: [], connector: [] };
+for (const band of document.querySelectorAll(".gift-ribbon-band[data-ribbon-route]")) {
+  ribbonRoutes[band.dataset.ribbonRoute].push(band);
+}
+for (const segments of Object.values(ribbonRoutes)) {
+  segments.sort((first, second) => Number(first.dataset.ribbonSegment) - Number(second.dataset.ribbonSegment));
+}
 const bow = document.querySelector(".gift-box__bow");
 const lid = document.querySelector("#giftLid");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -33,9 +27,9 @@ const progressIconPaths = {
   "arrow-up": "m12 4-8 8 1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12z"
 };
 const ribbonSteps = [
-  { route: "horizontal", edge: "start", direction: 1 },
-  { route: "vertical", edge: "end", direction: -1 },
-  { route: "connector", edge: "start", direction: 1 }
+  { route: "horizontal", direction: 1 },
+  { route: "vertical", direction: -1 },
+  { route: "connector", direction: 1 }
 ];
 
 const transitions = {
@@ -59,11 +53,7 @@ const transitions = {
 };
 const state = {
   phase: "ready",
-  progress: {
-    horizontal: { start: 0, end: 0 },
-    vertical: { start: 0, end: 0 },
-    connector: { start: 0, end: 0 }
-  },
+  progress: { horizontal: 0, vertical: 0, connector: 0 },
   ribbonStep: 0,
   growth: 0,
   sliderPosition: 0,
@@ -384,52 +374,24 @@ function buildTearClip(axis, progress, handPosition, edge) {
   return `polygon(${startPoints.join(", ")}, ${endPoints.reverse().join(", ")})`;
 }
 
-function renderSegmentedRibbon(route, segments, handPoint, edge) {
-  const segmentCount = segments.length;
-  const totalProgress = state.progress[route][edge] * segmentCount;
-  for (const segment of segments) {
-    const segmentIndex = Number(route === "horizontal"
-      ? segment.dataset.horizontalSegment
-      : segment.dataset.ribbonSegment);
-    const pathIndex = route === "horizontal"
-      ? segmentIndex
-      : edge === "start" ? segmentIndex : segmentCount - segmentIndex - 1;
-    const segmentProgress = Math.max(0, Math.min(1, totalProgress - pathIndex));
-    const segmentState = edge === "start"
-      ? { start: segmentProgress, end: 0 }
-      : { start: 0, end: segmentProgress };
+function renderRibbon(route, handPoint) {
+  const segments = ribbonRoutes[route];
+  const totalProgress = state.progress[route] * segments.length;
+  segments.forEach((segment, pathIndex) => {
+    const amount = Math.max(0, Math.min(1, totalProgress - pathIndex));
+    const edge = segment.dataset.ribbonFrom === "end" ? "end" : "start";
+    const segmentState = edge === "start" ? { start: amount, end: 0 } : { start: 0, end: amount };
     const axis = segment.dataset.ribbon;
-    const handPosition = axis === "horizontal" ? handPoint.y : handPoint.x;
-    const clip = buildTearClip(axis, segmentState, handPosition, edge);
+    const clip = buildTearClip(axis, segmentState, axis === "horizontal" ? handPoint.y : handPoint.x, edge);
     segment.style.clipPath = clip;
     segment.style.webkitClipPath = clip;
-  }
+  });
 }
 
-function renderRibbon(route, handPoint, edge) {
-  if (route === "vertical") {
-    renderSegmentedRibbon(route, verticalSegments, handPoint, edge);
-    const clip = buildTearClip("vertical", state.progress.vertical, handPoint.x, edge);
-    for (const band of verticalOtherBands) {
-      band.style.clipPath = clip;
-      band.style.webkitClipPath = clip;
-    }
-    return;
-  }
-  if (route === "connector") {
-    renderSegmentedRibbon(route, connectorSegments, handPoint, edge);
-    return;
-  }
-
-  renderSegmentedRibbon(route, horizontalSegments, handPoint, edge);
-}
-
-function setProgress(route, edge, nextProgress, handPosition) {
-  const oppositeEdge = edge === "start" ? "end" : "start";
-  const remaining = 1 - state.progress[route][oppositeEdge];
-  const requested = Math.max(state.progress[route][edge], Math.min(remaining, Math.max(0, nextProgress)));
-  state.progress[route][edge] = requested >= remaining * 0.985 ? remaining : requested;
-  renderRibbon(route, handPosition, edge);
+function setProgress(route, nextProgress, handPoint) {
+  const value = Math.max(state.progress[route], Math.min(1, Math.max(0, nextProgress)));
+  state.progress[route] = value >= 0.985 ? 1 : value;
+  renderRibbon(route, handPoint);
 }
 
 function localPoint(event) {
@@ -548,7 +510,7 @@ function completeRibbonStep(handPosition, expectedStep = state.ribbonStep) {
   if (state.phase !== "tearing" || state.ribbonStep !== expectedStep) return;
   vibrate();
   const step = ribbonSteps[state.ribbonStep];
-  setProgress(step.route, step.edge, 1, handPosition);
+  setProgress(step.route, 1, handPosition);
   state.ribbonStep += 1;
   if (state.ribbonStep === ribbonSteps.length) {
     setPhase("unwrapped");
@@ -589,7 +551,7 @@ function onProgressPointerDown(event) {
     const step = ribbonSteps[state.ribbonStep];
     gesture.step = step;
     gesture.stepIndex = state.ribbonStep;
-    gesture.startProgress = state.progress[step.route][step.edge];
+    gesture.startProgress = state.progress[step.route];
   }
   progressThumb.setPointerCapture(event.pointerId);
 }
@@ -631,7 +593,7 @@ function onProgressPointerMove(event) {
   const requested = gesture.startProgress + (deltaX * step.direction) / travel;
   const nextProgress = Math.max(gesture.startProgress, Math.min(1, requested));
   const handPoint = localPoint(event);
-  setProgress(step.route, step.edge, nextProgress, handPoint);
+  setProgress(step.route, nextProgress, handPoint);
   setThumbPosition(step.direction > 0 ? nextProgress : 1 - nextProgress);
   if (nextProgress >= 0.94) {
     completeRibbonStep(handPoint, gesture.stepIndex);
@@ -739,9 +701,9 @@ boxContainer.addEventListener("animationend", event => {
   if (event.animationName === "gift-box-tear-bump") boxContainer.classList.remove("is-tear-bumping");
 });
 
-renderRibbon("horizontal", { x: 0.5, y: 0.5 }, "start");
-renderRibbon("vertical", { x: 0.5, y: 0.5 }, "start");
-renderRibbon("connector", { x: 0.5, y: 0.5 }, "start");
+renderRibbon("horizontal", { x: 0.5, y: 0.5 });
+renderRibbon("vertical", { x: 0.5, y: 0.5 });
+renderRibbon("connector", { x: 0.5, y: 0.5 });
 
 function dropGift() {
   boxContainer.classList.add("is-falling");
