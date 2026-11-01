@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f0e6">
   <title>✦ 待拆封</title>
+  <link rel="preload" href="assets/background.webp?v=20261101" as="image" type="image/webp">
   <style>
     :root {
       color-scheme: light;
@@ -25,7 +26,7 @@
       margin: 0;
       color: var(--ink);
       background-color: var(--paper);
-      background-image: linear-gradient(rgba(245, 240, 230, .22), rgba(245, 240, 230, .22)), url("assets/background.png?v=20261023");
+      background-image: linear-gradient(rgba(245, 240, 230, .22), rgba(245, 240, 230, .22)), url("assets/background.webp?v=20261101");
       background-position: center;
       background-size: cover;
       background-repeat: no-repeat;
@@ -580,6 +581,8 @@
 
     .gift-box__end--top { transition: opacity 250ms ease; }
 
+    /* JS 開始掉落前先藏起來，避免盒子先出現在定位、又被拉到上方重掉一次 */
+    .gift-box-container:not(.is-falling):not(.is-landed) { visibility: hidden; }
     .gift-box-container.is-falling { pointer-events: none; }
     .gift-box-container.is-landed { pointer-events: auto; }
 
@@ -921,6 +924,6 @@
     </div>
   </main>
 
-  <script src="gift-box.js?v=title-20261101" defer></script>
+  <script src="gift-box.js?v=first-load-20261101" defer></script>
 </body>
 </html>

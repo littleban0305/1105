@@ -748,4 +748,25 @@ function dropGift() {
   requestAnimationFrame(frame);
 }
 
-dropGift();
+// 第一次進站時圖片還沒下載：先預載卡片圖，並等背景圖解碼好再讓盒子掉下來（最多等 2.5 秒）
+const cardPreload = new Image();
+cardPreload.src = "assets/card.png";
+
+function whenBackgroundReady(callback) {
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    callback();
+  };
+  const background = new Image();
+  background.onload = () => {
+    if (typeof background.decode === "function") background.decode().catch(() => {}).then(start);
+    else start();
+  };
+  background.onerror = start;
+  background.src = "assets/background.webp?v=20261101";
+  window.setTimeout(start, 2500);
+}
+
+whenBackgroundReady(dropGift);
