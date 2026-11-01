@@ -782,6 +782,45 @@
     .gift-envelope__card.is-card-image-visible::before,
     .gift-envelope__card.is-card-image-visible::after { display: none; }
 
+    .copy-code-bar {
+      position: fixed;
+      z-index: 11;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 400ms ease, transform 400ms ease;
+      pointer-events: none;
+    }
+
+    .copy-code-bar[hidden] { display: none; }
+    .copy-code-bar.is-visible { opacity: 1; transform: translateY(0); }
+    .copy-code-bar > * { pointer-events: auto; }
+    .copy-code-button { min-width: 168px; touch-action: manipulation; }
+
+    .copy-code-fallback {
+      margin: 0;
+      padding: 8px 14px;
+      border: 1px solid #c39a50;
+      border-radius: 3px;
+      color: var(--navy);
+      background: #fffdf7;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .copy-code-fallback[hidden] { display: none; }
+
+    .copy-code-fallback strong {
+      display: block;
+      font-size: 17px;
+      letter-spacing: .06em;
+      user-select: all;
+      -webkit-user-select: all;
+    }
+
     @keyframes gift-box-tear-bump {
       0%, 100% { transform: translate3d(0, var(--fall-y, 0px), 0); }
       28% { transform: translate3d(0, calc(var(--fall-y, 0px) - 16px), 0); }
@@ -921,9 +960,13 @@
         </button>
       </div>
       <p class="gift-progress__hint" id="progressHint" aria-live="polite"></p>
+      <div class="copy-code-bar" id="copyCodeBar" hidden>
+        <button class="action-button copy-code-button" id="copyCodeButton" type="button">複製兌換碼</button>
+        <p class="copy-code-fallback" id="copyCodeFallback" hidden>長按下面的兌換碼即可複製<strong id="copyCodeText"></strong></p>
+      </div>
     </div>
   </main>
 
-  <script src="gift-box.js?v=first-load-20261101" defer></script>
+  <script src="gift-box.js?v=copy-code-20261101" defer></script>
 </body>
 </html>
