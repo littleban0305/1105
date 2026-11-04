@@ -1,6 +1,3 @@
-// ★ 卡片做好後，把卡片上的兌換碼「原封不動」填在這裡（大小寫、數字都要一樣）
-const REDEEM_CODE = "請在這裡填入兌換碼";
-
 const giftBox = document.querySelector("#gift");
 const boxContainer = document.querySelector("#luckyBox");
 // 三條緞帶，每條依 data-ribbon-segment 的順序一段一段撕開
@@ -22,11 +19,6 @@ const progressIconPath = document.querySelector("#progressIconPath");
 const envelope = document.querySelector("#giftEnvelope");
 const envelopeCard = document.querySelector("#envelopeCard");
 const envelopeFlap = document.querySelector("#envelopeFlap");
-const copyCodeBar = document.querySelector("#copyCodeBar");
-const copyCodeButton = document.querySelector("#copyCodeButton");
-const copyCodeFallback = document.querySelector("#copyCodeFallback");
-document.querySelector("#copyCodeText").textContent = REDEEM_CODE;
-copyCodeButton.addEventListener("click", copyRedeemCode);
 const progressIconPaths = {
   lock: "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2ZM9 6a3 3 0 1 1 6 0v2H9Zm3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z",
   "arrow-forward": "M12 4 10.59 5.41 16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
@@ -97,64 +89,14 @@ function getUndistortedRect(element) {
   return { width, height, centerX, centerY, left: centerX - width / 2, top: centerY - height / 2 };
 }
 
-const COPY_BAR_SPACE = 68; // 卡片下方留給複製按鈕的高度
-
 function layoutOpenCard() {
   const aspectRatio = 1080 / 1920;
-  const maxHeight = window.innerHeight * 0.9 - COPY_BAR_SPACE;
-  const openWidth = Math.min(window.innerWidth * 0.9, maxHeight * aspectRatio);
+  const openWidth = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9 * aspectRatio);
   const openHeight = openWidth / aspectRatio;
-  const openTop = (window.innerHeight - openHeight - COPY_BAR_SPACE) / 2;
   envelopeCard.style.left = `${(window.innerWidth - openWidth) / 2}px`;
-  envelopeCard.style.top = `${openTop}px`;
+  envelopeCard.style.top = `${(window.innerHeight - openHeight) / 2}px`;
   envelopeCard.style.width = `${openWidth}px`;
   envelopeCard.style.height = `${openHeight}px`;
-  copyCodeBar.style.top = `${openTop + openHeight + 12}px`;
-}
-
-function legacyCopy(text) {
-  const area = document.createElement("textarea");
-  area.value = text;
-  area.setAttribute("readonly", "");
-  area.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-size:16px;";
-  document.body.append(area);
-  area.select();
-  area.setSelectionRange(0, text.length);
-  let copied = false;
-  try {
-    copied = document.execCommand("copy");
-  } catch (error) {
-    copied = false;
-  }
-  area.remove();
-  return copied;
-}
-
-async function copyRedeemCode() {
-  let copied = false;
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(REDEEM_CODE);
-      copied = true;
-    }
-  } catch (error) {
-    copied = false;
-  }
-  // 有些內建瀏覽器（例如 LINE）不支援新的剪貼簿 API，改用舊方法
-  if (!copied) copied = legacyCopy(REDEEM_CODE);
-
-  if (copied) {
-    vibrate(30);
-    copyCodeButton.textContent = "已複製 ✓";
-    window.clearTimeout(copyCodeButton.resetTimer);
-    copyCodeButton.resetTimer = window.setTimeout(() => {
-      copyCodeButton.textContent = "複製兌換碼";
-    }, 2000);
-  } else {
-    // 兩種方法都失敗：直接把兌換碼顯示出來讓她長按複製
-    copyCodeButton.hidden = true;
-    copyCodeFallback.hidden = false;
-  }
 }
 
 function clampBoxAngle(angle) {
@@ -302,6 +244,9 @@ function bounceBox() {
 function setPhase(next) {
   if (!transitions[state.phase].includes(next)) return false;
   state.phase = next;
+  // 流程一開始就確保操作提示已隱藏（例如沒觸控就用鍵盤操作的情況）
+  document.body.classList.remove("is-entry-guide");
+  entryGuide.style.visibility = "hidden";
 
   if (next === "bow-dropping") {
     boxContainer.classList.add("is-bow-dropping");
@@ -386,7 +331,7 @@ function setPhase(next) {
   } else if (next === "card-revealed") {
     const image = document.createElement("img");
     image.className = "gift-envelope__card-image";
-    image.src = "assets/card.png";
+    image.src = "assets/card.png?v=20261105";
     image.alt = "給你的卡片";
     envelopeCard.append(image);
 
@@ -395,8 +340,6 @@ function setPhase(next) {
       envelopeCard.classList.add("is-card-image-visible");
       envelopeCard.classList.add("is-card-rotatable");
       envelopeCard.removeEventListener("transitionend", revealCardImage);
-      copyCodeBar.hidden = false;
-      requestAnimationFrame(() => copyCodeBar.classList.add("is-visible"));
     };
     envelopeCard.addEventListener("transitionend", revealCardImage);
 
@@ -810,7 +753,7 @@ function dropGift() {
 
 // 第一次進站時圖片還沒下載：先預載卡片圖，並等背景圖解碼好再讓盒子掉下來（最多等 2.5 秒）
 const cardPreload = new Image();
-cardPreload.src = "assets/card.png";
+cardPreload.src = "assets/card.png?v=20261105";
 
 function whenBackgroundReady(callback) {
   let started = false;
